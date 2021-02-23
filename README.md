@@ -7,10 +7,10 @@
 <div>&nbsp;</div>
 
 ## Overview
-This repo is likely the most up to date and maintained version of the StudioWidgets repo on github. It contains more 
+This repo is likely the most up to date and maintained version of the StudioWidgets repo on github, and for now it's my hope to keep it that way. I will do my best to add and implement new and creative functionality to this library for myself and others to use in plugins.
 
 ## Contributions
-I will do my best to read and actively maintain pull requests and the repo in general. Contributions will fall under heavy scrutiny. When designing your code for a pull request, make sure to keep scalability and versatility in mind. Features should support many different settings or inputs, steer clear of hard coded inputs. Try to add as many possible ways for customization as you can, within limits.
+Contributions will fall under heavy scrutiny, but everyone is welcome to submit a pull request at any time.
 
 ## Coding Conventions
 No longer applicable.
