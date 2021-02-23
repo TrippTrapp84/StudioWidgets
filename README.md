@@ -426,7 +426,7 @@ for i = 1, #WidgetLibraryFiles do
 	end
 end
 ```
-Alternatively, if you are working in Rojo or some other external IDE, a bat file is included for building a stripped studio or 
+Alternatively, if you are working with Rojo or some external IDE, a bat file is included for building a stripped studio or 
 Rojo ready folder with the widget library inside.
 
 ## License
