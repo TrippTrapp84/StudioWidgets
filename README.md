@@ -15,6 +15,17 @@ Contributions will fall under heavy scrutiny, but everyone is welcome to submit 
 ## Coding Conventions
 No longer applicable.
 
+## Using the library
+Since this fork of the library uses plugin functionality, I have changed the way you use and load the library. In order to use the library from now on, load the library first using the code below in your main script (so that it has access to the plugin object):
+```Lua
+local Widgets = require(StudioWidgetsFolder.Require)(plugin)
+```
+After the first time you load the library, subsequent requires can forgo the plugin object, like so:
+```Lua
+local Widgets = require(StudioWidgetsFolder.Require)()
+```
+Notice how it's the same code just without the plugin object.
+
 ### Files
 
 * [CollapsibleTitledSection.lua](#collapsibletitledsectionlua)
