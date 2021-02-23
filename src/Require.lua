@@ -1,4 +1,4 @@
-local WidgetLibrary = script.Parent.Widgetlibrary:GetChildren()
+local WidgetLibrary = script.Parent.WidgetLibrary:GetChildren()
 
 local Initialized = false
 
