@@ -426,6 +426,8 @@ for i = 1, #WidgetLibraryFiles do
 	end
 end
 ```
+Alternatively, if you are working in Rojo or some other external IDE, a bat file is included for building a stripped studio or 
+Rojo ready folder with the widget library inside.
 
 ## License
 Available under the Apache 2.0 license. See [LICENSE](LICENSE) for details.
