@@ -388,22 +388,41 @@ scrollFrame:GetSectionFrame().Parent = widgetGui -- set the section parent
 The easiest way to bring the project into studio is to use the [HttpService](https://www.robloxdev.com/api-reference/class/HttpService) to pull the contents directly from this github project into module scripts. After enabling the http service from `Game Settings` the following code can be run in the command bar.
 
 ```Lua
-local http = game:GetService("HttpService")
-local req = http:GetAsync("https://api.github.com/repos/Khristian-Sutherland/StudioWidgets/contents/src")
-local json = http:JSONDecode(req)
+local HTTPService = game:GetService("HttpService")
+local SourceRequest = HTTPService:GetAsync("https://api.github.com/repos/TrippTrapp84/StudioWidgets/contents/src")
+local SourceFiles = HTTPService:JSONDecode(SourceRequest)
 
-local targetFolder = Instance.new("Folder")
-targetFolder.Name = "StudioWidgets"
-targetFolder.Parent = game.Workspace
+local WidgetFolder = Instance.new("Folder")
+WidgetFolder.Name = "StudioWidgets"
+WidgetFolder.Parent = game.ReplicatedStorage
 
-for i = 1, #json do
-	local file = json[i]
-	if (file.type == "file") then
-		local name = file.name:sub(1, #file.name-4)
-		local module = targetFolder:FindFirstChild(name) or Instance.new("ModuleScript")
-		module.Name = name
-		module.Source = http:GetAsync(file.download_url)
-		module.Parent = targetFolder
+local RequireModule = Instance.new("ModuleScript")
+RequireModule.Name = "Require"
+local RequireInd = 0
+for i,v in pairs(SourceFiles) do
+	if v.Name == "Require" then
+		RequireInd = i
+		break
+	end
+end
+RequireModule.Source = HTTPService:GetAsync(SourceFiles[RequireInd].download_url)
+RequireModule.Parent = WidgetFolder
+
+local WidgetLibraryFolder = Instance.new("Folder")
+WidgetLibraryFolder.Name = "WidgetLibrary"
+WidgetLibraryFolder.Parent = WidgetFolder
+
+local WidgetLibraryRequest = HTTPService:GetAsync("https://api.github.com/repos/TrippTrapp84/StudioWidgets/contents/src/WidgetLibrary")
+local WidgetLibraryFiles = HTTPService:JSONDecode(WidgetLibraryRequest)
+
+for i = 1, #WidgetLibraryFiles do
+	local File = WidgetLibraryFiles[i]
+	if (File.type == "file") then
+		local Name = File.name:sub(1, File.name:len()-4)
+		local Module = targetFolder:FindFirstChild(name) or Instance.new("ModuleScript")
+		Module.Name = Name
+		Module.Source = HTTPService:GetAsync(File.download_url)
+		Module.Parent = WidgetLibraryFolder
 	end
 end
 ```
