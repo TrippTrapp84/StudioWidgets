@@ -75,6 +75,7 @@ function DropdownMenu.new(nameSuffix, labelText, XOffset, selectionTable)
 	self._selected = ""
 	self._expanded = false
 	self._dropButton.MouseButton1Click:Connect(function()
+		print(GuiUtilities.GetAncestralBoundingBox(button))
 		self:_toggleExpand()
 	end)
 
