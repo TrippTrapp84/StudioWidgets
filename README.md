@@ -16,7 +16,7 @@ Contributions will fall under heavy scrutiny, but everyone is welcome to submit 
 No longer applicable.
 
 ## Using the library
-Since this fork of the library uses plugin functionality, I have changed the way you use and load the library. In order to use the library from now on, load the library first using the code below in your main script (so that it has access to the plugin object):
+Since this fork of the library uses plugin functionality, I have changed the way you use and load the library. In order to use the library from now on, load it first using the code below in your main script (so that it has access to the plugin object):
 ```Lua
 local Widgets = require(StudioWidgetsFolder.Require)(plugin)
 ```
@@ -25,6 +25,11 @@ After the first time you load the library, subsequent requires can forgo the plu
 local Widgets = require(StudioWidgetsFolder.Require)()
 ```
 Notice how it's the same code just without the plugin object.
+
+from here you simply index into the `Widgets` variable with the name of the class you'd like to create:
+```Lua
+local SomeTitleSection = Widgets.CollapsibleTitledSection.new() --Ignore the missing arguments
+```
 
 ### Files
 
