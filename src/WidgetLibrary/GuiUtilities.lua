@@ -287,6 +287,7 @@ function module.GetAncestralBoundingBox(Frame : Instance)
 	local CurrentFrame = Frame
 	while CurrentFrame.Parent do
 		CurrentFrame = CurrentFrame.Parent
+		if not CurrentFrame:IsA("GuiBase2d") then continue end
 		local IsWidget = CurrentFrame:IsA("DockWidgetPluginGui")
 		if IsWidget or CurrentFrame.ClipsDescendants then
 			if BoundingCorner1 then
