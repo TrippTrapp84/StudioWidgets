@@ -13,6 +13,7 @@ local DropdownMenu = {}
 DropdownMenu.__index = DropdownMenu
 
 DropdownMenu._defaultLength = 189
+DropdownMenu._defaultExpandTime = 0.15
 
 function DropdownMenu.new(nameSuffix, labelText, XOffset, selectionTable)
 	local self = {}
@@ -74,14 +75,22 @@ function DropdownMenu.new(nameSuffix, labelText, XOffset, selectionTable)
 	self._buttonArray = {}
 	self._selected = ""
 	self._expanded = false
+
+	local DropdownDB = false
+
 	self._dropButton.MouseButton1Click:Connect(function()
-		print(GuiUtilities.GetAncestralBoundingBox(button))
+		if DropdownDB then return end
+		DropdownDB = true
 		self:_toggleExpand()
+		DropdownDB = false
 	end)
 
 	self._dropButton.MouseButton2Click:Connect(function()
+		if DropdownDB then return end
+		DropdownDB = true
 		self:_retract()
 		self:ResetChoice()
+		DropdownDB = false
 	end)
 
 	if selectionTable then -- if the user provided a table of selections
@@ -100,19 +109,13 @@ function DropdownMenu:_toggleExpand()
 	local widget = self._invisFrame:FindFirstAncestorOfClass("DockWidgetPluginGui")
 	if widget then
 		-- now test if the bottom of the frame is below the absolute size of the widget
-		local absSizeY = self._contentsFrame.AbsoluteSize.Y
-		local absPosY = self._contentsFrame.AbsolutePosition.Y
-		local absAdded
-		if self._expanded and self._contentsFrame.AnchorPoint == Vector2.new(0.5,1) then
-			absAdded = absSizeY+absPosY+absSizeY
-		elseif self._contentsFrame.AnchorPoint == Vector2.new(0.5,1) then
-			absAdded = absSizeY+absPosY+absSizeY
-		else
-			absAdded = absSizeY+absPosY
-		end
+		local absAdded = self._contentsFrame.AbsolutePosition.Y + self._contentsFrame.AbsoluteSize.Y
+
+		local BoundingPos,BoundingSize = GuiUtilities.GetAncestralBoundingBox(self._invisFrame)
 
 		if not self._expanded then
-			if absAdded >= widget.AbsoluteSize.Y then
+			print(absAdded,BoundingPos.Y + BoundingSize.Y)
+			if absAdded >= BoundingPos.Y + BoundingSize.Y then
 				self._contentsFrame.AnchorPoint = Vector2.new(0.5,1)
 				self._contentsFrame.Position = UDim2.new(0.5,0,1,0)
 				self._invisFrame.AnchorPoint = Vector2.new(0.5,1)
@@ -128,6 +131,10 @@ function DropdownMenu:_toggleExpand()
 
 	if self._expanded then
 		self:_retract()
+		self._contentsFrame.AnchorPoint = Vector2.new(0.5,0)
+		self._contentsFrame.Position = UDim2.new(0.5,0,0,0)
+		self._invisFrame.AnchorPoint = Vector2.new(0.5,0)
+		self._invisFrame.Position = UDim2.new(0.5,0,1,0)
 		self._expanded = false
 	else
 		self:_expand()
@@ -136,12 +143,14 @@ function DropdownMenu:_toggleExpand()
 end
 
 function DropdownMenu:_retract()
-	self._invisFrame:TweenSize(UDim2.new(1,2,0,0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+	self._invisFrame:TweenSize(UDim2.new(1,2,0,0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, self._defaultExpandTime, true)
+	wait(self._defaultExpandTime)
 	self._expanded = false
 end
 
 function DropdownMenu:_expand()
-	self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize+2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.15, true)
+	self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize+2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, self._defaultExpandTime, true)
+	wait(self._defaultExpandTime)
 	self._expanded = true
 end
 

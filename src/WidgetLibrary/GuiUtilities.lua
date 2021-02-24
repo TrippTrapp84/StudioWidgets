@@ -282,7 +282,7 @@ function module.MakeFrameAutoScalingList(frame,uiListLayout)
 	module.AdjustHeightDynamicallyToLayout(frame, uiListLayout)
 end
 
-function module.GetAncestralBoundingBox(Frame : Instance)
+function module.GetAncestralBoundingBox(Frame)
 	local BoundingCorner1,BoundingCorner2
 	local CurrentFrame = Frame
 	while CurrentFrame.Parent do
@@ -291,16 +291,19 @@ function module.GetAncestralBoundingBox(Frame : Instance)
 		local IsWidget = CurrentFrame:IsA("DockWidgetPluginGui")
 		if IsWidget or CurrentFrame.ClipsDescendants then
 			if BoundingCorner1 then
-				local CurrentPosCorner1 = CurrentFrame.AbsolutePosition
-				local CurrentPosCorner2 = (IsWidget and Vector2.new() or CurrentFrame.AbsolutePosition) + CurrentFrame.AbsoluteSize
+				local CurrentPosCorner1 = (IsWidget and Vector2.new() or CurrentFrame.AbsolutePosition)
+				local CurrentPosCorner2 = CurrentPosCorner1 + CurrentFrame.AbsoluteSize
 				BoundingCorner1 = Vector2.new(
 					math.max(BoundingCorner1.X,CurrentPosCorner1.X),
 					math.max(BoundingCorner1.Y,CurrentPosCorner1.Y)
 				)
 				BoundingCorner2 = Vector2.new(
-					math.max(BoundingCorner2.X,CurrentPosCorner2.X),
-					math.max(BoundingCorner2.Y,CurrentPosCorner2.Y)
+					math.min(BoundingCorner2.X,CurrentPosCorner2.X),
+					math.min(BoundingCorner2.Y,CurrentPosCorner2.Y)
 				)
+			else
+				BoundingCorner1 = (IsWidget and Vector2.new() or CurrentFrame.AbsolutePosition)
+				BoundingCorner2 = BoundingCorner1 + CurrentFrame.AbsoluteSize
 			end
 		end
 	end
