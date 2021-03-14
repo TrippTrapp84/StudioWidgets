@@ -413,10 +413,10 @@ WidgetFolder.Name = "StudioWidgets"
 WidgetFolder.Parent = game.ReplicatedStorage
 
 local RequireModule = Instance.new("ModuleScript")
-RequireModule.Name = "Require"
+RequireModule.Name = "Require.lua"
 local RequireInd = 0
 for i,v in pairs(SourceFiles) do
-	if v.Name == "Require" then
+	if v.name == "Require.lua" then
 		RequireInd = i
 		break
 	end
@@ -435,7 +435,7 @@ for i = 1, #WidgetLibraryFiles do
 	local File = WidgetLibraryFiles[i]
 	if (File.type == "file") then
 		local Name = File.name:sub(1, File.name:len()-4)
-		local Module = targetFolder:FindFirstChild(name) or Instance.new("ModuleScript")
+		local Module = WidgetLibraryFolder:FindFirstChild(Name) or Instance.new("ModuleScript")
 		Module.Name = Name
 		Module.Source = HTTPService:GetAsync(File.download_url)
 		Module.Parent = WidgetLibraryFolder
