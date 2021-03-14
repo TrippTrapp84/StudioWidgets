@@ -413,7 +413,7 @@ WidgetFolder.Name = "StudioWidgets"
 WidgetFolder.Parent = game.ReplicatedStorage
 
 local RequireModule = Instance.new("ModuleScript")
-RequireModule.Name = "Require.lua"
+RequireModule.Name = "Require"
 local RequireInd = 0
 for i,v in pairs(SourceFiles) do
 	if v.name == "Require.lua" then
