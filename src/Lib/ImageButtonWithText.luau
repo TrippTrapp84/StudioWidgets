@@ -6,51 +6,62 @@
 -- selected states.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local SELECTED_TRANSPARENCY = 0.2
+local ADDITIONAL_TRANSPARENCY = 0.1
 
-local ImageButtonWithTextClass = {}
-ImageButtonWithTextClass.__index = ImageButtonWithTextClass
+local Class = {}
+Class.__index = Class
 
-local kSelectedBaseTransparency = 0.2
-local kAdditionalTransparency = 0.1
+type Config = {
+	Title: string,
+	ButtonSize: UDim2,
+	Icon: string,
 
-function ImageButtonWithTextClass.new(name, 
-		layoutOrder, 
-		icon, 
-		text, 
-		buttonSize,
-		imageSize, 
-		imagePos, 
-		textSize, 
-		textPos)
-	local self = {}
-	setmetatable(self, ImageButtonWithTextClass)
+	ImageSize: UDim2?,
+	ImagePosition: UDim2?,
+
+	TextSize: UDim2?,
+	TextPosition: UDim2?,
+
+	LayoutOrder: number?,
+}
+
+function Class.new(Data: Config)
+	local self = setmetatable({}, Class)
+
+	self.Title = Data.Title
+	self.ButtonSize = Data.ButtonSize
+	self.Icon = Data.Icon
+	self.ImageSize = Data.ImageSize or UDim2.fromScale(1, 1)
+	self.ImagePosition = Data.ImagePosition or UDim2.fromScale(.5, .5)
+	self.TextSize = Data.TextSize or UDim2.fromScale(1, .1)
+	self.TextPosition = Data.TextPosition or UDim2.fromScale(.5, 1)
+	self.LayoutOrder = Data.LayoutOrder or 1
 
 	local button = Instance.new("ImageButton")
-	button.Name = name
 	button.AutoButtonColor = false
-	button.Size = buttonSize
+	button.Size = self.ButtonSize
 	button.BorderSizePixel = 1
-	-- Image-with-text button has translucent background and "selected" background color.
-	-- When selected we set transluency to not-zero so we see selected color.
 	button.BackgroundTransparency = 1 
 
-	button.LayoutOrder = layoutOrder
+	button.LayoutOrder = self.LayoutOrder
 
 	local buttonIcon = Instance.new("ImageLabel")
 	buttonIcon.BackgroundTransparency = 1
-	buttonIcon.Image = icon or ""
-	buttonIcon.Size = imageSize
-	buttonIcon.Position = imagePos
+	buttonIcon.Image = self.Icon
+	buttonIcon.AnchorPoint = Vector2.new(.5, .5)
+	buttonIcon.Size = self.ImageSize
+	buttonIcon.Position = self.ImagePosition
 	buttonIcon.Parent = button
 
 	local textLabel = Instance.new("TextLabel")
 	textLabel.BackgroundTransparency = 1
-	textLabel.Text = text
-	textLabel.Size = textSize
-	textLabel.Position = textPos
+	textLabel.Text = self.Title
+	textLabel.Size = self.TextSize
+	textLabel.AnchorPoint = Vector2.new(.5, .5)
+	textLabel.Position = self.TextPosition
 	textLabel.TextScaled = true
 	textLabel.Font = Enum.Font.SourceSans
 	textLabel.Parent = button
@@ -94,7 +105,7 @@ function ImageButtonWithTextClass.new(name,
 		self:_updateButtonVisual()
 	end)
 	
-	local function updateButtonVisual()
+	function updateButtonVisual()
 		self:_updateButtonVisual()
 	end
 	settings().Studio.ThemeChanged:Connect(updateButtonVisual)
@@ -104,7 +115,7 @@ function ImageButtonWithTextClass.new(name,
 	return self
 end
 
-function ImageButtonWithTextClass:_updateButtonVisual()
+function Class:_updateButtonVisual()
 	-- Possibilties:
 	if (self._clicked) then 
 		-- This covers 'clicked and selected' or 'clicked'
@@ -143,18 +154,18 @@ function ImageButtonWithTextClass:_updateButtonVisual()
 	end
 end
 
-function ImageButtonWithTextClass:GetButton()
+function Class:GetButton()
 	return self._button
 end
 
-function ImageButtonWithTextClass:SetSelected(selected)
+function Class:SetSelected(selected)
 	self._selected = selected
 	self:_updateButtonVisual()
 end
  
-function ImageButtonWithTextClass:GetSelected()
+function Class:GetSelected()
 	return self._selected
 end
 
 --// RETURN
-return ImageButtonWithTextClass
+return Class

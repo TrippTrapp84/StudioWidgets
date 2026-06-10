@@ -7,23 +7,25 @@
 -- Uses shading to indicate hover and click states.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local Class = {}
+Class.__index = Class
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+type Config = {
+	Icon: string,
+	Size: UDim2
+}
 
-local StatefulImageButtonClass = {}
-StatefulImageButtonClass.__index = StatefulImageButtonClass
+function Class.new(Data: Config)
+	local self = setmetatable({}, Class)
 
-function StatefulImageButtonClass.new(buttonName, imageAsset, buttonSize)
-	local self = {}
-	setmetatable(self, StatefulImageButtonClass)
+	self.Icon = Data.Icon
+	self.Size = Data.Size
 
 	local button = Instance.new("ImageButton")
-	button.Image = imageAsset
+	button.Image = self.Icon
 	button.BackgroundTransparency = 1
 	button.BorderSizePixel = 0
-	button.Size = buttonSize
-	button.Name = buttonName
+	button.Size = self.Size
 
 	self._button = button
 
@@ -62,7 +64,7 @@ function StatefulImageButtonClass.new(buttonName, imageAsset, buttonSize)
 	return self
 end
 
-function StatefulImageButtonClass:_updateButtonVisual()
+function Class:_updateButtonVisual()
 	if (self._selected) then 
 		self._button.ImageTransparency = 0
 		self._button.ImageColor3 = Color3.new(1,1,1) 
@@ -80,18 +82,18 @@ function StatefulImageButtonClass:_updateButtonVisual()
 	end
 end
 
-function StatefulImageButtonClass:setSelected(selected)
+function Class:SetSelected(selected)
 	self._selected = selected
 	self:_updateButtonVisual()
 end
 
-function StatefulImageButtonClass:getSelected()
+function Class:GetSelected()
 	return self._selected
 end
 
-function StatefulImageButtonClass:getButton()
+function Class:GetButton()
 	return self._button
 end
 
 --// RETURN
-return StatefulImageButtonClass
+return Class

@@ -1,7 +1,0 @@
-[package]
-name = "tripptrapp84/studio-widgets"
-version = "1.0.1"
-registry = "https://github.com/Aquatica-Studios-LLC/wally-index"
-realm = "shared"
-
-[dependencies]

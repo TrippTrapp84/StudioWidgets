@@ -1,0 +1,17 @@
+return {
+    CollapsibleTitledSection = require(script.CollapsibleTitledSection),
+    CustomTextButton = require(script.CustomTextButton),
+    DockWidget = require(script.DockWidget),
+    ImageButtonWithText = require(script.ImageButtonWithText),
+    LabeledCheckbox = require(script.LabeledCheckbox),
+    LabeledDropdownMenu = require(script.LabeledDropdownMenu),
+    LabeledMultiChoice = require(script.LabeledMultiChoice),
+    LabeledRadioButton = require(script.LabeledRadioButton),
+    LabeledSlider = require(script.LabeledSlider),
+    LabeledTextInput = require(script.LabeledTextInput),
+    StatefulImageButton = require(script.StatefulImageButton),
+    TransparentTextInput = require(script.TransparentTextInput),
+    VerticallyResizableListFrame = require(script.VerticallyResizableListFrame),
+    VerticallyScalingListFrame = require(script.VerticallyScalingListFrame),
+    VerticalScrollingFrame = require(script.VerticalScrollingFrame),
+}

@@ -5,45 +5,57 @@
 -- Creates a frame containing a label and a text input control.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local TEXTBOX_INTERNAL_PADDING = 4
 
-local kTextInputWidth = 100
-local kTextBoxInternalPadding = 4
+local Class = {}
+Class.__index = Class
 
-local LabeledTextInputClass = {}
-LabeledTextInputClass.__index = LabeledTextInputClass
+local function DefaultValues()
+	return {
+		Suffix = NULL,
+		LabelText = NULL,
+		InitialValue = "",
+		TextBoxWidth = 100,
+		TextBoxInset = 0
+	}
+end
 
-function LabeledTextInputClass.new(nameSuffix, labelText, defaultValue,TextBoxWidth)
-	local self = {}
-	setmetatable(self, LabeledTextInputClass)
+type Config = {
+	Title: string,
+	InitialValue: string?,
+	Width: number?,
+	Inset: number?
+}
 
-	-- Note: we are using "graphemes" instead of characters.
-	-- In modern text-manipulation-fu, what with internationalization, 
-	-- emojis, etc, it's not enough to count characters, particularly when 
-	-- concerned with "how many <things> am I rendering?".
-	-- We are using the 
+function Class.new(Data: Config)
+	local self = setmetatable({}, Class)
+
+	self.Title = Data.Title
+	self.InitialValue = Data.InitialValue or ""
+	self.Width = Data.Width or 100
+	self.Inset = Data.Inset or 0
+
 	self._MaxGraphemes = 10
 	
 	self._valueChangedFunction = nil
+	self._focusLostFunction = nil
 
-	local defaultValue = defaultValue or ""
-
-	local frame = GuiUtilities.MakeStandardFixedHeightFrame('TextInput ' .. nameSuffix)
+	local frame = GuiUtilities.MakeStandardFixedHeightFrame('TextInput ')
 	self._frame = frame
 
-	local label = GuiUtilities.MakeStandardPropertyLabel(labelText)
+	local label = GuiUtilities.MakeStandardPropertyLabel(self.Title)
 	label.Parent = frame
 	self._label = label
 
-	self._value = defaultValue
+	self._value = self.InitialValue
 
 	-- Dumb hack to add padding to text box,
 	local textBoxWrapperFrame = Instance.new("Frame")
 	textBoxWrapperFrame.Name = "Wrapper"
-	textBoxWrapperFrame.Size = UDim2.new(0, TextBoxWidth or kTextInputWidth, 0.6, 0)
-	textBoxWrapperFrame.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin, .5, 0)
+	textBoxWrapperFrame.Size = UDim2.new(0, self.Width, 0.6, 0)
+	textBoxWrapperFrame.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + self.Inset, .5, 0)
 	textBoxWrapperFrame.AnchorPoint = Vector2.new(0, .5)
 	textBoxWrapperFrame.Parent = frame
 	GuiUtilities.syncGuiElementInputFieldColor(textBoxWrapperFrame)
@@ -52,13 +64,13 @@ function LabeledTextInputClass.new(nameSuffix, labelText, defaultValue,TextBoxWi
 	local textBox = Instance.new("TextBox")
 	textBox.Parent = textBoxWrapperFrame
 	textBox.Name = "TextBox"
-	textBox.Text = defaultValue
+	textBox.Text = self.InitialValue
 	textBox.Font = Enum.Font.SourceSans
 	textBox.TextSize = 15
 	textBox.BackgroundTransparency = 1
 	textBox.TextXAlignment = Enum.TextXAlignment.Left
-	textBox.Size = UDim2.new(1, -kTextBoxInternalPadding, 1, GuiUtilities.kTextVerticalFudge)
-	textBox.Position = UDim2.new(0, kTextBoxInternalPadding, 0, 0)
+	textBox.Size = UDim2.new(1, -TEXTBOX_INTERNAL_PADDING, 1, GuiUtilities.kTextVerticalFudge)
+	textBox.Position = UDim2.new(0, TEXTBOX_INTERNAL_PADDING, 0, 0)
 	textBox.ClipsDescendants = true
 
 	GuiUtilities.syncGuiElementFontColor(textBox)
@@ -89,37 +101,46 @@ function LabeledTextInputClass.new(nameSuffix, labelText, defaultValue,TextBoxWi
 			self._valueChangedFunction(self._value)
 		end
 	end)
+
+	textBox.FocusLost:Connect(function()
+		if self._focusLostFunction then
+			self._focusLostFunction(self._value)
+		end
+	end)
 	
 	self._textBox = textBox
 
 	return self
 end
 
-function LabeledTextInputClass:SetValueChangedFunction(vcf)
+function Class:SetValueChangedFunction(vcf)
 	self._valueChangedFunction = vcf
 end
 
-function LabeledTextInputClass:GetFrame()
+function Class:SetFocusLostFunction(flf)
+	self._focusLostFunction = flf
+end
+
+function Class:GetFrame()
 	return self._frame
 end
 
-function LabeledTextInputClass:GetValue()
+function Class:GetValue()
 	return self._value
 end
 
-function LabeledTextInputClass:GetMaxGraphemes()
+function Class:GetMaxGraphemes()
 	return self._MaxGraphemes
 end
 
-function LabeledTextInputClass:SetMaxGraphemes(newValue)
+function Class:SetMaxGraphemes(newValue)
 	self._MaxGraphemes = newValue
 end
 
-function LabeledTextInputClass:SetValue(newValue)
+function Class:SetValue(newValue)
 	if self._value ~= newValue then
 		self._textBox.Text = newValue
 	end
 end
 
---// RETURN
-return LabeledTextInputClass
+return Class

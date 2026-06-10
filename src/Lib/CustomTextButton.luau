@@ -5,22 +5,25 @@
 -- Creates text button with custom look & feel, hover/click effects.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local BUTTON_DEFAULT_IMAGE = "rbxasset://textures/TerrainTools/button_default.png"
 
-local kButtonImageIdDefault = "rbxasset://textures/TerrainTools/button_default.png"
+local Class = {}
+Class.__index = Class
 
-local CustomTextButtonClass = {}
-CustomTextButtonClass.__index = CustomTextButtonClass
+type Config = {
+	Title: string
+}
 
-function CustomTextButtonClass.new(buttonName, labelText)
-	local self = {}
-	setmetatable(self, CustomTextButtonClass)
+function Class.new(Data: Config)
+
+	local self = setmetatable({}, Class)
+
+	self.LabelText = Data.Title
 
 	local button = Instance.new('ImageButton')
-	button.Name = buttonName
-	button.Image = kButtonImageIdDefault
+	button.Image = BUTTON_DEFAULT_IMAGE
 	button.ImageColor3 = Color3.new(0.243137, 0.243137, 0.243137)
 	button.BackgroundTransparency = 1
 	button.ScaleType = Enum.ScaleType.Slice
@@ -28,7 +31,7 @@ function CustomTextButtonClass.new(buttonName, labelText)
 	button.AutoButtonColor = false
 
 	local label = Instance.new('TextLabel')
-	label.Text = labelText
+	label.Text = self.LabelText
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.new(1, 0, 1, GuiUtilities.kButtonVerticalFudge)
 	label.Font = Enum.Font.SourceSans                  
@@ -73,7 +76,7 @@ function CustomTextButtonClass.new(buttonName, labelText)
 	return self
 end
 
-function CustomTextButtonClass:_updateButtonVisual()
+function Class:_updateButtonVisual()
 	if (self._clicked) then 
 		self._button.ImageColor3 = Color3.new(0.184314, 0.184314, 0.184314)
 		--self._label.TextColor3 = GuiUtilities.kPressedButtonTextColor
@@ -89,8 +92,8 @@ end
 -- Backwards compatibility (should be removed in the future)
 -- CustomTextButtonClass.getButton = CustomTextButtonClass.GetButton
 
-function CustomTextButtonClass:GetButton()
+function Class:GetButton()
 	return self._button
 end
 
-return CustomTextButtonClass
+return Class

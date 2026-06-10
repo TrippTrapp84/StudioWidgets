@@ -6,23 +6,20 @@
 -- Will scale dynamically as children grow.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local BOTTOM_PADDING = 10
 
-local VerticallyScalingListFrameClass = {}
-VerticallyScalingListFrameClass.__index = VerticallyScalingListFrameClass
+local Class = {}
+Class.__index = Class
 
-local kBottomPadding = 10
-
-function VerticallyScalingListFrameClass.new(nameSuffix)
-	local self = {}
-	setmetatable(self, VerticallyScalingListFrameClass)
+function Class.new()
+	local self = setmetatable({}, Class)
 
 	self._resizeCallback = nil
 	
 	local frame = Instance.new('Frame')
-	frame.Name = 'VSLFrame' .. nameSuffix
+	frame.Name = 'VSLFrame'
 	frame.Size = UDim2.new(1, 0, 0, 0)
 	frame.BackgroundTransparency = 0
 	frame.BorderSizePixel = 0
@@ -49,28 +46,27 @@ function VerticallyScalingListFrameClass.new(nameSuffix)
 	return self
 end
 
-function VerticallyScalingListFrameClass:AddBottomPadding()
+function Class:AddBottomPadding()
 	local frame = Instance.new("Frame")
 	frame.Name = "BottomPadding"
 	frame.BackgroundTransparency = 1
-	frame.Size = UDim2.new(1, 0, 0, kBottomPadding)
+	frame.Size = UDim2.new(1, 0, 0, BOTTOM_PADDING)
 	frame.LayoutOrder = 1000
 	frame.Parent = self._frame
 end
 
-function VerticallyScalingListFrameClass:GetFrame()
+function Class:GetFrame()
 	return self._frame
 end
 
-function VerticallyScalingListFrameClass:AddChild(childFrame)
+function Class:AddChild(childFrame)
 	childFrame.LayoutOrder = self._childCount
 	self._childCount = self._childCount + 1
 	childFrame.Parent = self._frame
 end
 
-function VerticallyScalingListFrameClass:SetCallbackOnResize(callback)
+function Class:SetCallbackOnResize(callback)
 	self._resizeCallback = callback
 end
 
---// RETURN
-return VerticallyScalingListFrameClass
+return Class

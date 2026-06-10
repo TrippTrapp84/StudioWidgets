@@ -1,0 +1,22 @@
+{
+    "cSpell.words": [
+        "Cutscenes",
+        "Minimizable",
+        "newindex",
+        "profilebegin",
+        "profileend",
+        "Pushback",
+        "rbxasset",
+        "rbxassetid",
+        "readu",
+        "Renamable",
+        "setmetatable",
+        "Shapecast",
+        "Spherecast",
+        "tonumber",
+        "writeu"
+    ],
+    "luau-lsp.sourcemap.rojoProjectFile": "test.project.json",
+    "luau-lsp.completion.imports.enabled": false,
+    "chat.disableAIFeatures": true
+}

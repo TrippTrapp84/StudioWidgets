@@ -5,28 +5,59 @@
 -- Creates dropdown-style selection menu.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local NULL = {}
 
-local DropdownMenu = {}
-DropdownMenu.__index = DropdownMenu
+local DEFAULT_LENGTH = 189
+local DEFAULT_EXPAND_TIME = 0.15
 
-DropdownMenu._defaultLength = 189
-DropdownMenu._defaultExpandTime = 0.15
+local Class = {}
+Class.__index = Class
 
-function DropdownMenu.new(nameSuffix, labelText, XOffset, selectionTable)
-	local self = {}
-	setmetatable(self, DropdownMenu)
+local function DefaultValues()
+	return {
+		Suffix = NULL,
+		LabelText = NULL,
+		ButtonInset = 0,
+		SelectionTable = {}
+	}
+end
+
+type DropdownOption = {
+	Name: string,
+	Value: unknown,
+
+	--[=[
+		Generally not necessary, but if you need support for multiple dropdown options with the same display name it is required.
+
+		The internal Id used to uniquely identify this option. If `Identifier == nil`, `Name` is used as the identifier instead
+	]=]
+	Identifier: string?
+}
+
+type Config = {
+	Title: string,
+	Inset: number?,
+	Options: {DropdownOption}?
+}
+
+function Class.new(Data: Config)
+	local self = setmetatable({}, Class)
+
+	self.Title = Data.Title
+	self.Inset = Data.Inset or 0
+	self.Options = Data.Options or {}
+
 	self._dropdownButtonHeight = GuiUtilities.kTitleBarHeight -- should be 27
 	self._expandedSize = 0
 	
 	self._SelectionChangedFunction = nil
 
-	local section = GuiUtilities.MakeStandardFixedHeightFrame('DMSection' .. nameSuffix)
+	local section = GuiUtilities.MakeStandardFixedHeightFrame('DMSection')
 	self._sectionFrame = section
 
-	local label = GuiUtilities.MakeStandardPropertyLabel(labelText)
+	local label = GuiUtilities.MakeStandardPropertyLabel(self.Title)
 	label.Parent = section
 
 
@@ -34,7 +65,7 @@ function DropdownMenu.new(nameSuffix, labelText, XOffset, selectionTable)
 	button.Text = "Select an option"
 	button.Size = UDim2.new(0, 100, 0.6, 0)
 	button.AnchorPoint = Vector2.new(0,0.5)
-	button.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + (XOffset or 0), 0.5, 0)
+	button.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + self.Inset, 0.5, 0)
 	button.Parent = section
 	GuiUtilities.syncGuiElementBorderColor(button)
 	GuiUtilities.syncGuiElementInputFieldColor(button)
@@ -76,35 +107,31 @@ function DropdownMenu.new(nameSuffix, labelText, XOffset, selectionTable)
 	self._selected = ""
 	self._expanded = false
 
-	local DropdownDB = false
+	self._dropdownDB = false
 
 	self._dropButton.MouseButton1Click:Connect(function()
-		if DropdownDB then return end
-		DropdownDB = true
+		if self._dropdownDB then return end
+		self._dropdownDB = true
 		self:_toggleExpand()
-		DropdownDB = false
 	end)
 
 	self._dropButton.MouseButton2Click:Connect(function()
-		if DropdownDB then return end
-		DropdownDB = true
+		if self._dropdownDB then return end
+		self._dropdownDB = true
 		self:_retract()
 		self:ResetChoice()
-		DropdownDB = false
 	end)
 
-	if selectionTable then -- if the user provided a table of selections
-		self:AddSelectionsFromTable(selectionTable)
-	end
+	self:AddSelectionsFromTable(self.Options)
 
 	return self
 end
 
-function DropdownMenu:SetSelectionChangedFunction(scf)
+function Class:SetSelectionChangedFunction(scf)
 	self._SelectionChangedFunction = scf
 end
 
-function DropdownMenu:_toggleExpand()
+function Class:_toggleExpand()
 	-- get the widget
 	local widget = self._invisFrame:FindFirstAncestorOfClass("DockWidgetPluginGui")
 	if widget then
@@ -131,10 +158,6 @@ function DropdownMenu:_toggleExpand()
 
 	if self._expanded then
 		self:_retract()
-		self._contentsFrame.AnchorPoint = Vector2.new(0.5,0)
-		self._contentsFrame.Position = UDim2.new(0.5,0,0,0)
-		self._invisFrame.AnchorPoint = Vector2.new(0.5,0)
-		self._invisFrame.Position = UDim2.new(0.5,0,1,0)
 		self._expanded = false
 	else
 		self:_expand()
@@ -142,30 +165,35 @@ function DropdownMenu:_toggleExpand()
 	end
 end
 
-function DropdownMenu:_retract()
-	self._invisFrame:TweenSize(UDim2.new(1,2,0,0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, self._defaultExpandTime, true)
-	wait(self._defaultExpandTime)
+function Class:_retract()
+	self._invisFrame:TweenSize(UDim2.new(1,2,0,0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true,function()
+		wait(DEFAULT_EXPAND_TIME)
+		self._dropdownDB = false
+		self._contentsFrame.AnchorPoint = Vector2.new(0.5,0)
+		self._contentsFrame.Position = UDim2.new(0.5,0,0,0)
+		self._invisFrame.AnchorPoint = Vector2.new(0.5,0)
+		self._invisFrame.Position = UDim2.new(0.5,0,1,0)
+	end)
 	self._expanded = false
 end
 
-function DropdownMenu:_expand()
-	self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize+2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, self._defaultExpandTime, true)
-	wait(self._defaultExpandTime)
+function Class:_expand()
+	self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize+2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true,function()
+		wait(DEFAULT_EXPAND_TIME)
+		self._dropdownDB = false
+	end)
 	self._expanded = true
 end
 
-function DropdownMenu:AddSelection(selectionTable)
-	assert(type(selectionTable[1]) == "string", "Expected String for argument 1, got "..type(selectionTable[1]))
-	assert(selectionTable[2] ~= nil, "Expected a value for argument 2, got nil")
-	--assert(type(selectionTable[3]) == "string", "Expected String for argument 3, got "..type(selectionTable[3]))
-
-	if self._buttonArray[selectionTable[3]] then -- if the selection already exists
-		return warn("There is already a selection with identifier: "..selectionTable[3])
+function Class:AddSelection(Selection: DropdownOption)
+	local Id = Selection.Identifier or Selection.Name
+	if self._buttonArray[Id] then -- if the selection already exists
+		return warn("There is already a selection with identifier: ".. Id)
 	end
 
 	local button = Instance.new("TextButton")
-	button.Name = selectionTable[1]
-	button.Text = selectionTable[1]
+	button.Name = Id
+	button.Text = Selection.Name
 	button.Size = UDim2.new(1,0,0,self._dropdownButtonHeight)
 	button.BackgroundTransparency = 1
 	button.ZIndex = 10
@@ -173,8 +201,8 @@ function DropdownMenu:AddSelection(selectionTable)
 	GuiUtilities.syncGuiElementFontColor(button)
 	
 	local function ActivateButton(InternalTrigger)
-		self._selected = selectionTable[2]
-		self._dropButton.Text = selectionTable[1]
+		self._selected = Selection.Value
+		self._dropButton.Text = Selection.Name
 		self:_retract()
 		if self._SelectionChangedFunction then
 			self._SelectionChangedFunction(self._selected,InternalTrigger)
@@ -183,13 +211,13 @@ function DropdownMenu:AddSelection(selectionTable)
 
 	local connection = button.MouseButton1Click:Connect(ActivateButton)
 
-	self._buttonArray[selectionTable[3]] = {button = button, connection = connection,activate = ActivateButton}
+	self._buttonArray[Id] = {button = button, connection = connection,activate = ActivateButton}
 
 	-- change contentsFrame size. Remember to do this at the end next time.
 	self:_updateSize()
 end
 
-function DropdownMenu:RemoveSelection(identifier)
+function Class:RemoveSelection(identifier)
 	if self._buttonArray[identifier] then
 		self._buttonArray[identifier].connection:Disconnect()
 		self._buttonArray[identifier].button:Destroy()
@@ -198,7 +226,7 @@ function DropdownMenu:RemoveSelection(identifier)
 	end
 end
 
-function DropdownMenu:AddSelectionsFromTable(selectionTable)
+function Class:AddSelectionsFromTable(selectionTable)
 	assert(type(selectionTable) == "table", "Expected table. Got "..type(selectionTable))
 
 	for i,v in pairs(selectionTable) do
@@ -208,42 +236,42 @@ function DropdownMenu:AddSelectionsFromTable(selectionTable)
 	end
 end
 
-function DropdownMenu:ResetChoice()
+function Class:ResetChoice()
 	self._selected = ""
 	self._dropButton.Text = "Select an option"
 end
 
-function DropdownMenu:SetChoice(id)
+function Class:SetChoice(id)
 	if self._buttonArray[id] then
 		self._buttonArray[id].activate(true)
 	end
 end
 
-function DropdownMenu:GetChoice()
+function Class:GetChoice()
 	return self._selected
 end
 
-function DropdownMenu:GetSectionFrame()
+function Class:GetSectionFrame()
 	return self._sectionFrame
 end
 
-function DropdownMenu:GetContentsFrame()
+function Class:GetContentsFrame()
 	return self._contentsFrame
 end
 
-function DropdownMenu:ChangeLabel(labelText)
+function Class:ChangeLabel(labelText)
 	assert(type(labelText) == "string", "Expected string. Got "..type(labelText))
 	self._titleLabel.Text = labelText
 end
 
-function DropdownMenu:_updateSize()
+function Class:_updateSize()
 	local count = 0
 	for _,v in pairs(self._buttonArray) do
 		count += 1
 	end
 	if count >= 7 then
 		self._canvasSize = count*self._dropdownButtonHeight
-		self._expandedSize = DropdownMenu._defaultLength
+		self._expandedSize = DEFAULT_LENGTH
 		self._contentsFrame.CanvasSize = UDim2.new(1,-2,0,self._canvasSize)
 		self._contentsFrame.Size = UDim2.new(1,-2,0,self._expandedSize)
 		if self._expanded then
@@ -263,4 +291,4 @@ function DropdownMenu:_updateSize()
 end
 
 --// RETURN
-return DropdownMenu
+return Class

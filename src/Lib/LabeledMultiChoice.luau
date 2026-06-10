@@ -6,75 +6,80 @@
 -- is always selected.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
-
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 local LabeledRadioButton = require(script.Parent.LabeledRadioButton)
 local LabeledCheckbox = require(script.Parent.LabeledCheckbox)
 local VerticallyScalingListFrame = require(script.Parent.VerticallyScalingListFrame)
 
-local kRadioButtonsHPadding = GuiUtilities.kRadioButtonsHPadding
+local RADIO_BUTTONS_HP_PADDING = GuiUtilities.kRadioButtonsHPadding
 
-local LabeledMultiChoiceClass = {}
-LabeledMultiChoiceClass.__index = LabeledMultiChoiceClass
+local Class = {}
+Class.__index = Class
 
+type MultiChoiceOption = {
+	Name: string,
+	Value: unknown
+}
 
--- Note: 
--- "choices" is an array of entries.
--- each entry must have at least 2 fields:
--- "Id" - a unique (in the scope of choices) string id.  Not visible to user.
--- "Text" - user-facing string: the label for the choice.
-function LabeledMultiChoiceClass.new(nameSuffix, labelText, choices, initChoiceIndex)
-	local self = {}
-	setmetatable(self, LabeledMultiChoiceClass)
+type Config = {
+	Title: string,
+	Choices: {MultiChoiceOption}?,
+	InitialChoice: number?
+}
+
+function Class.new(Data: Config)
+	local self = setmetatable({}, Class)
+
+	self.Title = Data.Title
+	self.Choices = Data.Choices or {}
 
 	self._buttonObjsByIndex = {}
 
-	if (not initChoiceIndex ) then 
-		initChoiceIndex = 1
-	end
-	if (initChoiceIndex > #choices) then 
-		initChoiceIndex = #choices
-	end
-
-
-	local vsl = VerticallyScalingListFrame.new("MCC_" .. nameSuffix)
+	local vsl = VerticallyScalingListFrame.new()
 	vsl:AddBottomPadding()
 
-	local titleLabel = GuiUtilities.MakeFrameWithSubSectionLabel("Title", labelText)
+	local titleLabel = GuiUtilities.MakeFrameWithSubSectionLabel("Title", self.Title)
 	vsl:AddChild(titleLabel)
 
 	-- Container for cells.
-	local cellFrame = self:_MakeRadioButtons(choices)
+	local cellFrame = self:_MakeRadioButtons(self.Choices)
 	vsl:AddChild(cellFrame)
 
 	self._vsl = vsl
 
-	self:SetSelectedIndex(initChoiceIndex)
+	self:SetSelectedIndex(Data.InitialChoice or 0)
 
 	return self
 end
 
-function LabeledMultiChoiceClass:SetSelectedIndex(selectedIndex) 
+function Class:SetSelectedIndex(selectedIndex) 
 	self._selectedIndex = selectedIndex
 	for i = 1, #self._buttonObjsByIndex do 
 		self._buttonObjsByIndex[i]:SetValue(i == selectedIndex)
 	end
 
-	if (self._valueChangedFunction) then 
+	if self._valueChangedFunction then 
 		self._valueChangedFunction(self._selectedIndex)
 	end
 end
 
-function LabeledMultiChoiceClass:GetSelectedIndex()
+function Class:GetSelectedIndex()
 	return self._selectedIndex
 end
 
-function LabeledMultiChoiceClass:SetValueChangedFunction(vcf)
-	self._valueChangedFunction = vcf
+function Class:OnChanged<T>(vcf: ((Value: T?) -> ())?)
+	self._valueChangedFunction = if vcf then function(Index)
+		local Option = self.Options[Index]
+		if not Option then
+			vcf(nil)
+			return
+		end
+
+		vcf(Option.Value)
+	end else nil
 end
 
-function LabeledMultiChoiceClass:GetFrame()
+function Class:GetFrame()
 	return self._vsl:GetFrame()
 end
 
@@ -83,7 +88,7 @@ end
 -- All the bits are smaller.
 -- Fixed width instead of flood-fill.
 -- Box comes first, then label.
-function LabeledMultiChoiceClass:_MakeRadioButtons(choices)
+function Class:_MakeRadioButtons(choices: {MultiChoiceOption})
 	local frame = GuiUtilities.MakeFrame("RadioButtons")
 	frame.BackgroundTransparency = 1
 
@@ -94,18 +99,20 @@ function LabeledMultiChoiceClass:_MakeRadioButtons(choices)
 	
 	-- Make a grid to put checkboxes in.
 	local uiGridLayout = Instance.new("UIGridLayout")
-	uiGridLayout.CellSize = LabeledCheckbox.kMinFrameSize
-	uiGridLayout.CellPadding = UDim2.new(0, 
-		kRadioButtonsHPadding,
+	uiGridLayout.CellSize = LabeledCheckbox.MIN_FRAME_SIZE
+	uiGridLayout.CellPadding = UDim2.new(
 		0,
-		GuiUtilities.kStandardVMargin)
+		RADIO_BUTTONS_HP_PADDING,
+		0,
+		GuiUtilities.kStandardVMargin
+	)
 	uiGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	uiGridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 	uiGridLayout.Parent = frame
 	uiGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-	for i, choiceData in ipairs(choices) do 
-		self:_AddRadioButton(frame, i, choiceData)
+	for Order, Choice in pairs(choices) do 
+		self:_AddRadioButton(frame, Order, Choice)
 	end
 
 		-- Sync size with content size.
@@ -114,8 +121,10 @@ function LabeledMultiChoiceClass:_MakeRadioButtons(choices)
 	return frame
 end
 
-function LabeledMultiChoiceClass:_AddRadioButton(parentFrame, index, choiceData)
-	local radioButtonObj = LabeledRadioButton.new(choiceData.Id, choiceData.Text)
+function Class:_AddRadioButton(parentFrame, index, choiceData)
+	local radioButtonObj = LabeledRadioButton.new{
+		Title = choiceData.Name
+	}
 	self._buttonObjsByIndex[index] = radioButtonObj
 
 	radioButtonObj:SetValueChangedFunction(function(value)
@@ -131,4 +140,4 @@ function LabeledMultiChoiceClass:_AddRadioButton(parentFrame, index, choiceData)
 end
 
 --// RETURN
-return LabeledMultiChoiceClass
+return Class

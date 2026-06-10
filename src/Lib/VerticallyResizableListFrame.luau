@@ -1,34 +1,42 @@
 ----------------------------------------
 --
--- VerticallyScalingListFrame
+-- VerticallyResizableListFrame
 --
--- Creates a frame that organizes children into a list layout.
--- Will scale dynamically as children grow.
+-- Creates a frame that can be resized dynamically by users, with added cursor indicators
+-- Will correctly clip descendants and preserve pixel size when widgets are scaled.
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local RunService = game:GetService("RunService")
 
-local RunServ = game:GetService("RunService")
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
+local PluginUtil = require(script.Parent.Parent.Util.Plugin)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local BOTTOM_PADDING = 10
+local RESIZE_LINE_THICKNESS = 5
+local SCALING_MOUSE_ICON = "rbxasset://SystemCursors/SizeNS"
 
-local Handler = {}
-Handler.__index = Handler
+local Class = {}
+Class.__index = Class
 
-local kBottomPadding = 10
-local kResizeLineThickness = 5
-local ScalingIcon = "rbxasset://SystemCursors/SizeNS"
+type Config = {
+	InitialHeight: number?,
+	MinimumHeight: number?,
+	MaximumHeight: number?,
+	HeightLocked: boolean?
+}
 
-function Handler.new(nameSuffix,StartingSize,MinimumSize,MaximumSize,SizeLocked)
-	local self = {}
-	setmetatable(self, Handler)
+function Class.new(Data: Config)
+	local self = setmetatable({}, Class)
+
+	self.MaximumHeight = Data.MaximumHeight or 300
+	self.MinimumHeight = Data.MinimumHeight or 100
 
 	self._resizeCallback = nil
 	self._widgetParent = nil
-	self._sizeLocked = SizeLocked
+	self._sizeLocked = Data.HeightLocked or false
 	
 	local frame = Instance.new('Frame')
-	frame.Name = 'VRLFrame' .. nameSuffix
+	frame.Name = 'VRLFrame'
 	frame.Size = UDim2.new(1, 0, 0, 0)
 	frame.BackgroundTransparency = 0
 	frame.BorderSizePixel = 0
@@ -43,8 +51,8 @@ function Handler.new(nameSuffix,StartingSize,MinimumSize,MaximumSize,SizeLocked)
 	
 	local ResizeLine = Instance.new("ImageButton")
 	ResizeLine.Name = "VRLFrameResizeLine"
-	ResizeLine.Size = UDim2.new(1,0,0,kResizeLineThickness)
-	ResizeLine.Position = UDim2.new(0,0,1,-kResizeLineThickness)
+	ResizeLine.Size = UDim2.new(1,0,0,RESIZE_LINE_THICKNESS)
+	ResizeLine.Position = UDim2.new(0,0,1,-RESIZE_LINE_THICKNESS)
 	ResizeLine.Image = ""
 	ResizeLine.AutoButtonColor = false
 	ResizeLine.BorderSizePixel = 0
@@ -53,18 +61,18 @@ function Handler.new(nameSuffix,StartingSize,MinimumSize,MaximumSize,SizeLocked)
 	GuiUtilities.syncGuiElementStripeColor(ResizeLine)
 
 	local function updateSizes(NewSize)
-		NewSize = math.max(math.min(NewSize,MaximumSize),MinimumSize)
-		self._frame.Size = UDim2.new(1, 0, 0, NewSize)
+		NewSize = math.max(math.min(NewSize,self.MaximumHeight),self.MinimumHeight)
+		self._frame.Size = UDim2.new(1, 0, 0, NewSize-RESIZE_LINE_THICKNESS)
 		if (self._resizeCallback) then 
-			self._resizeCallback()
+			self._resizeCallback(NewSize)
 		end
 	end
 	
-	local Mouse = plugin:GetMouse()
+	local Mouse = PluginUtil.GetPluginDistributorObject():GetMouse()
 	local MouseIsDragging = false
 	
 	ResizeLine.MouseEnter:Connect(function()
-		Mouse.Icon = ScalingIcon
+		Mouse.Icon = SCALING_MOUSE_ICON
 	end)
 	
 	local PastLeave = tick()
@@ -72,7 +80,7 @@ function Handler.new(nameSuffix,StartingSize,MinimumSize,MaximumSize,SizeLocked)
 		PastLeave = tick()
 		local MyPastLeave = PastLeave
 		while MouseIsDragging do
-			wait()
+			task.wait()
 			if MyPastLeave ~= PastLeave then return end
 		end
 		Mouse.Icon = ""
@@ -95,11 +103,11 @@ function Handler.new(nameSuffix,StartingSize,MinimumSize,MaximumSize,SizeLocked)
 			MPos = self._widgetParent:GetRelativeMousePosition()
 			local NewPos = MPos.Y - frame.AbsolutePosition.Y - Offset
 			updateSizes(NewPos)
-			RunServ.RenderStepped:Wait()
+			RunService.RenderStepped:Wait()
 		end
 		MouseIsDragging = false
 	end)
-	updateSizes(StartingSize)
+	updateSizes(Data.InitialHeight or self.MaximumHeight)
 	
 	frame.AncestryChanged:Connect(function()
 		self._widgetParent = frame:FindFirstAncestorWhichIsA("DockWidgetPluginGui")
@@ -110,32 +118,31 @@ function Handler.new(nameSuffix,StartingSize,MinimumSize,MaximumSize,SizeLocked)
 	return self
 end
 
-function Handler:AddBottomPadding()
+function Class:AddBottomPadding()
 	local frame = Instance.new("Frame")
 	frame.Name = "BottomPadding"
 	frame.BackgroundTransparency = 1
-	frame.Size = UDim2.new(1, 0, 0, kBottomPadding)
+	frame.Size = UDim2.new(1, 0, 0, BOTTOM_PADDING)
 	frame.LayoutOrder = 1000
 	frame.Parent = self._frame
 end
 
-function Handler:GetFrame()
+function Class:GetFrame()
 	return self._frame
 end
 
-function Handler:AddChild(childFrame)
+function Class:AddChild(childFrame)
 	childFrame.LayoutOrder = self._childCount
 	self._childCount = self._childCount + 1
 	childFrame.Parent = self._frame
 end
 
-function Handler:SetCallbackOnResize(callback)
+function Class:SetCallbackOnResize(callback)
 	self._resizeCallback = callback
 end
 
-function Handler:SetLocked(locked)
+function Class:SetLocked(locked)
 	self._sizeLocked = locked
 end
 
---// RETURN
-return Handler
+return Class

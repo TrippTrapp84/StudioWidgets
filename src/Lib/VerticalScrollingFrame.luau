@@ -5,23 +5,20 @@
 -- Creates a scrolling frame that automatically updates canvas size
 --
 ----------------------------------------
-local plugin = _G.StudioWidgetsPluginGlobalDistributorObject
+local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 
-local GuiUtilities = require(script.Parent.GuiUtilities)
+local Class = {}
+Class.__index = Class
 
-local VerticalScrollingFrame = {}
-VerticalScrollingFrame.__index = VerticalScrollingFrame
-
-function VerticalScrollingFrame.new(suffix)
-	local self = {}
-	setmetatable(self, VerticalScrollingFrame)
+function Class.new()
+	local self = setmetatable({}, Class)
 	
 	local section = Instance.new("Frame")
 	section.BorderSizePixel = 0
 	section.Size = UDim2.new(1, 0, 1, 0)
 	section.Position = UDim2.new(0, 0, 0, 0)
 	section.BackgroundTransparency = 1
-	section.Name = "VerticalScrollFrame" .. suffix
+	section.Name = "VerticalScrollFrame"
 	
 	local scrollBackground = Instance.new("Frame")
 	scrollBackground.Name = "ScrollbarBackground"
@@ -33,7 +30,7 @@ function VerticalScrollingFrame.new(suffix)
 	scrollBackground.ZIndex = 2;
 	
 	local scrollFrame = Instance.new("ScrollingFrame")
-	scrollFrame.Name = "ScrollFrame" .. suffix
+	scrollFrame.Name = "ScrollFrame"
 	scrollFrame.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
 	scrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 	scrollFrame.ElasticBehavior = Enum.ElasticBehavior.Never
@@ -68,22 +65,22 @@ function VerticalScrollingFrame.new(suffix)
 	return self
 end
 
-function VerticalScrollingFrame:_updateScrollbarBackingVisibility()
+function Class:_updateScrollbarBackingVisibility()
 	self._scrollBackground.Visible = self._scrollFrame.AbsoluteSize.y < self._uiListLayout.AbsoluteContentSize.y
 end
 
-function VerticalScrollingFrame:_updateScrollingFrameCanvas()
+function Class:_updateScrollingFrameCanvas()
 	self._scrollFrame.CanvasSize = UDim2.new(0, 0, 0, self._uiListLayout.AbsoluteContentSize.Y)
 	self:_updateScrollbarBackingVisibility()
 end
 
-function VerticalScrollingFrame:GetContentsFrame()
+function Class:GetContentsFrame()
 	return self._scrollFrame
 end
 
-function VerticalScrollingFrame:GetSectionFrame()
+function Class:GetSectionFrame()
 	return self._section
 end
 
 --// RETURN
-return VerticalScrollingFrame
+return Class
