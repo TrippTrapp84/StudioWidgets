@@ -12,16 +12,6 @@ local TEXTBOX_INTERNAL_PADDING = 4
 local Class = {}
 Class.__index = Class
 
-local function DefaultValues()
-	return {
-		Suffix = NULL,
-		LabelText = NULL,
-		InitialValue = "",
-		TextBoxWidth = 100,
-		TextBoxInset = 0
-	}
-end
-
 type Config = {
 	Title: string,
 	InitialValue: string?,

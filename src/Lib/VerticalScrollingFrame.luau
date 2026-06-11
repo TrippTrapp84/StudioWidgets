@@ -74,11 +74,7 @@ function Class:_updateScrollingFrameCanvas()
 	self:_updateScrollbarBackingVisibility()
 end
 
-function Class:GetContentsFrame()
-	return self._scrollFrame
-end
-
-function Class:GetSectionFrame()
+function Class:GetFrame()
 	return self._section
 end
 

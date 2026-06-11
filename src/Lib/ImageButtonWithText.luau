@@ -154,7 +154,7 @@ function Class:_updateButtonVisual()
 	end
 end
 
-function Class:GetButton()
+function Class:GetFrame()
 	return self._button
 end
 

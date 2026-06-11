@@ -21,16 +21,6 @@ local STEPS = 100
 local Class = {}
 Class.__index = Class
 
-local function DefaultValues()
-	return {
-		Suffix = NULL,
-		LabelText = NULL,
-		StepCount = 100,
-		SliderInset = 0,
-		InitialValue = 1
-	}
-end
-
 type Config = {
 	Title: string,
 	Steps: number?,

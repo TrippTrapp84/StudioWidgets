@@ -91,7 +91,7 @@ function Class:GetSelected()
 	return self._selected
 end
 
-function Class:GetButton()
+function Class:GetFrame()
 	return self._button
 end
 

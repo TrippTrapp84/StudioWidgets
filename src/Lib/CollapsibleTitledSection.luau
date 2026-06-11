@@ -87,8 +87,8 @@ function Class.new(Data: Config)
 	self:_CreateTitleBar(self.LabelText,self.TitleBarInset or 0,self.Renamable)
 	self:SetCollapsedState(self.Minimized)
 
-	if (self.AutoScalingEnabled) then
-		GuiUtilities.MakeFrameAutoScalingList(self:GetContentsFrame())
+	if self.AutoScalingEnabled then
+		GuiUtilities.MakeFrameAutoScalingList(self._contentsFrame)
 	end
 	
 	self._contentsFrame.ChildAdded:Connect(function(ChildFrame)
@@ -122,12 +122,8 @@ function Class.new(Data: Config)
 end
 
 
-function Class:GetSectionFrame()
+function Class:GetFrame()
 	return self._frame
-end
-
-function Class:GetContentsFrame()
-	return self._contentsFrame
 end
 
 function Class:_UpdateSize()

@@ -251,12 +251,8 @@ function Class:GetChoice()
 	return self._selected
 end
 
-function Class:GetSectionFrame()
+function Class:GetFrame()
 	return self._sectionFrame
-end
-
-function Class:GetContentsFrame()
-	return self._contentsFrame
 end
 
 function Class:ChangeLabel(labelText)

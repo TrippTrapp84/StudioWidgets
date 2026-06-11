@@ -92,7 +92,7 @@ end
 -- Backwards compatibility (should be removed in the future)
 -- CustomTextButtonClass.getButton = CustomTextButtonClass.GetButton
 
-function Class:GetButton()
+function Class:GetFrame()
 	return self._button
 end
 

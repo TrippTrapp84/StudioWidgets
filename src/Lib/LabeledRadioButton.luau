@@ -40,7 +40,7 @@ function Class.new(Data: Config)
 	self._button.BackgroundTransparency = 1
 
 	local function updateImages()
-		if (GuiUtilities:ShouldUseIconsForDarkerBackgrounds()) then 
+		if (GuiUtilities:ShouldUseIconsForDarkerBackgrounds()) then
 			self._checkImage.Image = BULLET_IMAGE_DARK
 			self._button.Image = BUTTON_IMAGE_DARK
 		else
