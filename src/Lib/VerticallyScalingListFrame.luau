@@ -7,66 +7,70 @@
 --
 ----------------------------------------
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
+local Signal = require(script.Parent.Parent.Util.Signal)
+local Types = require(script.Parent.Parent.Types)
 
 local BOTTOM_PADDING = 10
 
 local Class = {}
 Class.__index = Class
 
-function Class.new()
-	local self = setmetatable({}, Class)
+type VerticallyScalingListFrame = Types.VerticallyScalingListFrame
 
-	self._resizeCallback = nil
-	
-	local frame = Instance.new('Frame')
-	frame.Name = 'VSLFrame'
-	frame.Size = UDim2.new(1, 0, 0, 0)
-	frame.BackgroundTransparency = 0
-	frame.BorderSizePixel = 0
-	GuiUtilities.syncGuiElementBackgroundColor(frame)
+function Class.new(): VerticallyScalingListFrame
+	local self = (setmetatable({}, Class) :: never) :: VerticallyScalingListFrame
 
-	self._frame = frame
-	
-	local uiListLayout = Instance.new('UIListLayout')
-	uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	uiListLayout.Parent = frame
-	self._uiListLayout = uiListLayout
+	self.Resized = Signal.new()
 
-	local function updateSizes()
-		self._frame.Size = UDim2.new(1, 0, 0, uiListLayout.AbsoluteContentSize.Y)
-		if (self._resizeCallback) then 
-			self._resizeCallback()
-		end
+	local Frame = Instance.new('Frame')
+	Frame.Name = 'VSLFrame'
+	Frame.Size = UDim2.new(1, 0, 0, 0)
+	Frame.BackgroundTransparency = 0
+	Frame.BorderSizePixel = 0
+	GuiUtilities.SyncGuiElementBackgroundColor(Frame)
+
+	self.Frame = Frame
+
+	local UiListLayout = Instance.new('UIListLayout')
+	UiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	UiListLayout.Parent = Frame
+	self.UiListLayout = UiListLayout
+
+	local function UpdateSizes()
+		self.Frame.Size = UDim2.new(1, 0, 0, UiListLayout.AbsoluteContentSize.Y)
+		self.Resized:Fire()
 	end
-	self._uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSizes)
-	updateSizes()
+	self.UiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateSizes)
+	UpdateSizes()
 
-	self._childCount = 0
+	self.ChildCount = 0
 
 	return self
 end
 
 function Class:AddBottomPadding()
-	local frame = Instance.new("Frame")
-	frame.Name = "BottomPadding"
-	frame.BackgroundTransparency = 1
-	frame.Size = UDim2.new(1, 0, 0, BOTTOM_PADDING)
-	frame.LayoutOrder = 1000
-	frame.Parent = self._frame
+	local self = self :: VerticallyScalingListFrame
+
+	local Frame = Instance.new("Frame")
+	Frame.Name = "BottomPadding"
+	Frame.BackgroundTransparency = 1
+	Frame.Size = UDim2.new(1, 0, 0, BOTTOM_PADDING)
+	Frame.LayoutOrder = 1000
+	Frame.Parent = self.Frame
 end
 
 function Class:GetFrame()
-	return self._frame
+	local self = self :: VerticallyScalingListFrame
+
+	return self.Frame
 end
 
-function Class:AddChild(childFrame)
-	childFrame.LayoutOrder = self._childCount
-	self._childCount = self._childCount + 1
-	childFrame.Parent = self._frame
-end
+function Class:AddChild(ChildFrame: GuiObject)
+	local self = self :: VerticallyScalingListFrame
 
-function Class:SetCallbackOnResize(callback)
-	self._resizeCallback = callback
+	ChildFrame.LayoutOrder = self.ChildCount
+	self.ChildCount = self.ChildCount + 1
+	ChildFrame.Parent = self.Frame
 end
 
 return Class

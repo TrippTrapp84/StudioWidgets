@@ -1,16 +1,20 @@
 ----------------------------------------
 --
--- LabeledTextInput.lua
+-- TransparentTextInput.lua
 --
--- Creates a frame containing a label and a text input control.
+-- Creates a frame containing a text input control (no label).
 --
 ----------------------------------------
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
+local Signal = require(script.Parent.Parent.Util.Signal)
+local Types = require(script.Parent.Parent.Types)
 
 local TEXTBOX_INTERNAL_PADDING = 4
 
 local Class = {}
 Class.__index = Class
+
+type TransparentTextInput = Types.TransparentTextInput
 
 type Config = {
 	InitialValue: string?,
@@ -19,67 +23,63 @@ type Config = {
 	ClearOnFocus: boolean?,
 }
 
-function Class.new(Data: Config)
-	local self = setmetatable({}, Class)
+function Class.new(Data: Config): TransparentTextInput
+	local self = (setmetatable({}, Class) :: never) :: TransparentTextInput
 
 	self.InitialValue = Data.InitialValue or ""
 	self.Inset = Data.Inset or 0
 	self.ClearOnFocus = Data.ClearOnFocus or false
 	self.Width = Data.Width or 100
 
-	self._MaxGraphemes = 10
-	
-	self._valueChangedFunction = nil
-	self._focusLostFunction = nil
+	self.MaxGraphemes = 10
 
-	local frame = GuiUtilities.MakeStandardFixedHeightFrame('TextInput ')
-	self._frame = frame
+	self.ValueChanged = Signal.new()
+	self.FocusLost = Signal.new()
 
-	--local label = GuiUtilities.MakeStandardPropertyLabel(labelText)
-	--label.Parent = frame
-	--self._label = label
+	local Frame = GuiUtilities.MakeStandardFixedHeightFrame('TextInput ')
+	self.Frame = Frame
 
-	self._value = self.InitialValue
+	self.Value = self.InitialValue
 
 	-- Dumb hack to add padding to text box,
-	local textBoxWrapperFrame = Instance.new("Frame")
-	textBoxWrapperFrame.Name = "Wrapper"
-	textBoxWrapperFrame.Size = UDim2.new(0, self.Width, 0.6, 0)
-	textBoxWrapperFrame.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + self.Inset, .5, 0)
-	textBoxWrapperFrame.AnchorPoint = Vector2.new(0, .5)
-	textBoxWrapperFrame.Parent = frame
-	textBoxWrapperFrame.BorderSizePixel = 0
-	textBoxWrapperFrame.BackgroundTransparency = 1
-	GuiUtilities.syncGuiElementInputFieldColor(textBoxWrapperFrame)
+	local TextBoxWrapperFrame = Instance.new("Frame")
+	TextBoxWrapperFrame.Name = "Wrapper"
+	TextBoxWrapperFrame.Size = UDim2.new(0, self.Width, 0.6, 0)
+	TextBoxWrapperFrame.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + self.Inset, .5, 0)
+	TextBoxWrapperFrame.AnchorPoint = Vector2.new(0, .5)
+	TextBoxWrapperFrame.Parent = Frame
+	TextBoxWrapperFrame.BorderSizePixel = 0
+	TextBoxWrapperFrame.BackgroundTransparency = 1
+	GuiUtilities.SyncGuiElementInputFieldColor(TextBoxWrapperFrame)
 
-	local textBox = Instance.new("TextBox")
-	textBox.Parent = textBoxWrapperFrame
-	textBox.Name = "TextBox"
-	textBox.Text = self.InitialValue
-	textBox.Font = Enum.Font.SourceSans
-	textBox.ClearTextOnFocus = self.ClearOnFocus
-	textBox.TextSize = 15
-	textBox.BackgroundTransparency = 1
-	textBox.TextXAlignment = Enum.TextXAlignment.Left
-	textBox.Size = UDim2.new(1, -TEXTBOX_INTERNAL_PADDING, 1, GuiUtilities.kTextVerticalFudge)
-	textBox.Position = UDim2.new(0, 0, 0, 0)
-	textBox.ClipsDescendants = true
-	self._textBox = textBox
+	local TextBox = Instance.new("TextBox")
+	TextBox.Parent = TextBoxWrapperFrame
+	TextBox.Name = "TextBox"
+	TextBox.Text = self.InitialValue
+	TextBox.Font = Enum.Font.SourceSans
+	TextBox.ClearTextOnFocus = self.ClearOnFocus
+	TextBox.TextSize = 15
+	TextBox.BackgroundTransparency = 1
+	TextBox.TextXAlignment = Enum.TextXAlignment.Left
+	TextBox.Size = UDim2.new(1, -TEXTBOX_INTERNAL_PADDING, 1, GuiUtilities.TextVerticalFudge)
+	TextBox.Position = UDim2.new(0, 0, 0, 0)
+	TextBox.ClipsDescendants = true
+	self.TextBox = TextBox
 
-	GuiUtilities.syncGuiElementFontColor(textBox)
-	
-	textBox:GetPropertyChangedSignal("Text"):Connect(function()
+	GuiUtilities.SyncGuiElementFontColor(TextBox)
+
+	TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 		-- Never let the text be too long.
-		-- Careful here: we want to measure number of graphemes, not characters, 
+		-- Careful here: we want to measure number of graphemes, not characters,
 		-- in the text, and we want to clamp on graphemes as well.
-		if (utf8.len(self._textBox.Text) > self._MaxGraphemes) then 
-			local count = 0
-			for start, stop in utf8.graphemes(self._textBox.Text) do
-				count = count + 1
-				if (count > self._MaxGraphemes) then 
+		if (utf8.len(self.TextBox.Text) > self.MaxGraphemes) then
+			local Count = 0
+			for Start, Stop in utf8.graphemes(self.TextBox.Text) do
+				Count = Count + 1
+				if (Count > self.MaxGraphemes) then
 					-- We have gone one too far.
 					-- clamp just before the beginning of this grapheme.
-					self._textBox.Text = string.sub(self._textBox.Text, 1, start-1)
+					self.TextBox.Text = string.sub(self.TextBox.Text, 1, Start-1)
 					break
 				end
 			end
@@ -89,50 +89,46 @@ function Class.new(Data: Config)
 			return
 		end
 
-		self._value = self._textBox.Text
-		if (self._valueChangedFunction) then 
-			self._valueChangedFunction(self._value)
-		end
+		self.Value = self.TextBox.Text
+		self.ValueChanged:Fire(self.Value)
 	end)
-	
-	textBox.FocusLost:Connect(function()
-		if self._focusLostFunction then
-			self._focusLostFunction(self._value)
-		end
+
+	TextBox.FocusLost:Connect(function()
+		self.FocusLost:Fire(self.Value)
 	end)
-	
 
 	return self
 end
 
-function Class:SetValueChangedFunction(vcf)
-	self._valueChangedFunction = vcf
-end
-
-function Class:SetFocusLostFunction(flf)
-	self._focusLostFunction = flf
-end
-
 function Class:GetFrame()
-	return self._frame
+	local self = self :: TransparentTextInput
+
+	return self.Frame
 end
 
 function Class:GetValue()
-	return self._value
+	local self = self :: TransparentTextInput
+
+	return self.Value
 end
 
 function Class:GetMaxGraphemes()
-	return self._MaxGraphemes
+	local self = self :: TransparentTextInput
+
+	return self.MaxGraphemes
 end
 
-function Class:SetMaxGraphemes(newValue)
-	local Diff = newValue - self._MaxGraphemes
-	self._MaxGraphemes = newValue
+function Class:SetMaxGraphemes(NewValue: number)
+	local self = self :: TransparentTextInput
+
+	self.MaxGraphemes = NewValue
 end
 
-function Class:SetValue(newValue)
-	if self._value ~= newValue then
-		self._textBox.Text = newValue
+function Class:SetValue(NewValue: string)
+	local self = self :: TransparentTextInput
+
+	if self.Value ~= NewValue then
+		self.TextBox.Text = NewValue
 	end
 end
 

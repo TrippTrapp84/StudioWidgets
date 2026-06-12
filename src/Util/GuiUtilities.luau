@@ -1,223 +1,222 @@
 local module = {}
 
+module.TitleBarHeight = 27
+module.InlineTitleBarHeight = 24
 
-module.kTitleBarHeight = 27
-module.kInlineTitleBarHeight = 24
+module.StandardContentAreaWidth = 180
 
-module.kStandardContentAreaWidth = 180
+module.StandardPropertyHeight = 30
+module.SubSectionLabelHeight = 30
 
-module.kStandardPropertyHeight = 30
-module.kSubSectionLabelHeight = 30
+module.StandardVMargin = 7
+module.StandardHMargin = 16
 
-module.kStandardVMargin = 7
-module.kStandardHMargin = 16
+module.CheckboxMinLabelWidth = 52
+module.CheckboxMinMargin = 12
+module.CheckboxWidth = 12
 
-module.kCheckboxMinLabelWidth = 52
-module.kCheckboxMinMargin = 12
-module.kCheckboxWidth = 12
+module.RadioButtonsHPadding = 24
 
-module.kRadioButtonsHPadding = 24
+module.StandardLineLabelLeftMargin = module.TitleBarHeight
+module.StandardLineElementLeftMargin = (
+	module.StandardLineLabelLeftMargin
+	+ module.CheckboxMinLabelWidth
+	+ module.CheckboxMinMargin
+	+ module.CheckboxWidth
+	+ module.RadioButtonsHPadding
+)
+module.StandardLineLabelWidth = (module.StandardLineElementLeftMargin - module.StandardLineLabelLeftMargin - 10)
 
-module.StandardLineLabelLeftMargin = module.kTitleBarHeight
-module.StandardLineElementLeftMargin = (module.StandardLineLabelLeftMargin + module.kCheckboxMinLabelWidth
-+ module.kCheckboxMinMargin + module.kCheckboxWidth + module.kRadioButtonsHPadding)
-module.StandardLineLabelWidth = (module.StandardLineElementLeftMargin - module.StandardLineLabelLeftMargin - 10 )
+module.DropDownHeight = 55
 
-module.kDropDownHeight = 55
+module.BottomButtonsFrameHeight = 50
+module.BottomButtonsHeight = 28
 
-module.kBottomButtonsFrameHeight = 50
-module.kBottomButtonsHeight = 28
+module.ShapeButtonSize = 32
+module.TextVerticalFudge = -3
+module.ButtonVerticalFudge = -5
 
-module.kShapeButtonSize = 32
-module.kTextVerticalFudge = -3
-module.kButtonVerticalFudge = -5
+module.BottomButtonsWidth = 100
 
-module.kBottomButtonsWidth = 100
+module.DisabledTextColor = Color3.new(0.4, 0.4, 0.4) --todo: input spec disabled text color
+module.StandardButtonTextColor = Color3.new(0, 0, 0) --todo: input spec disabled text color
+module.PressedButtonTextColor = Color3.new(1, 1, 1) --todo: input spec disabled text color
 
-module.kDisabledTextColor = Color3.new(.4, .4, .4)                   --todo: input spec disabled text color
-module.kStandardButtonTextColor = Color3.new(0, 0, 0)                --todo: input spec disabled text color
-module.kPressedButtonTextColor = Color3.new(1, 1, 1)                 --todo: input spec disabled text color
+module.ButtonStandardBackgroundColor = Color3.new(1, 1, 1) --todo: sync with spec
+module.ButtonStandardBorderColor = Color3.new(0.4, 0.4, 0.4) --todo: sync with spec
+module.ButtonDisabledBackgroundColor = Color3.new(0.7, 0.7, 0.7) --todo: sync with spec
+module.ButtonDisabledBorderColor = Color3.new(0.6, 0.6, 0.6) --todo: sync with spec
 
-module.kButtonStandardBackgroundColor = Color3.new(1, 1, 1)          --todo: sync with spec
-module.kButtonStandardBorderColor = Color3.new(.4,.4,.4)             --todo: sync with spec
-module.kButtonDisabledBackgroundColor = Color3.new(.7,.7,.7)         --todo: sync with spec
-module.kButtonDisabledBorderColor = Color3.new(.6,.6,.6)             --todo: sync with spec
+module.ButtonBackgroundTransparency = 0.5
+module.ButtonBackgroundIntenseTransparency = 0.4
 
-module.kButtonBackgroundTransparency = 0.5
-module.kButtonBackgroundIntenseTransparency = 0.4
-
-module.kMainFrame = nil
+module.MainFrame = nil
 
 function module.ShouldUseIconsForDarkerBackgrounds()
-	local mainColor = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
-	return (mainColor.r + mainColor.g + mainColor.b) / 3 < 0.5
+	local MainColor = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
+	return (MainColor.R + MainColor.G + MainColor.B) / 3 < 0.5
 end
 
-function module.SetMainFrame(frame)
-	module.kMainFrame = frame
+function module.SetMainFrame(Frame)
+	module.MainFrame = Frame
 end
 
-function module.syncGuiElementTitleColor(guiElement)
-	local function setColors()
-		guiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.Titlebar)
+function module.SyncGuiElementTitleColor(GuiElement)
+	local function SetColors()
+		GuiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.Titlebar)
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
-function module.syncGuiElementInputFieldColor(guiElement)
-	local function setColors()
-		guiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground)
+function module.SyncGuiElementInputFieldColor(GuiElement)
+	local function SetColors()
+		GuiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground)
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
-function module.syncGuiElementBackgroundColor(guiElement)
-	local function setColors()
-		guiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
+function module.SyncGuiElementBackgroundColor(GuiElement)
+	local function SetColors()
+		GuiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
-function module.syncGuiElementStripeColor(guiElement)
-	local function setColors()
-		if ((guiElement.LayoutOrder + 1) % 2 == 0) then 
-			guiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
+function module.SyncGuiElementStripeColor(GuiElement: GuiObject)
+	local function SetColors()
+		if (GuiElement.LayoutOrder + 1) % 2 == 0 then
+			GuiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
 		else
-			guiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.CategoryItem)
+			GuiElement.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.CategoryItem)
 		end
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
-function module.syncGuiElementBorderColor(guiElement)
-	local function setColors()
-		guiElement.BorderColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.Border)
+function module.SyncGuiElementBorderColor(GuiElement)
+	local function SetColors()
+		GuiElement.BorderColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.Border)
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
-function module.syncGuiElementFontColor(guiElement)
-	local function setColors()
-		guiElement.TextColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainText)
+function module.SyncGuiElementFontColor(GuiElement)
+	local function SetColors()
+		GuiElement.TextColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainText)
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
-function module.syncGuiElementScrollColor(guiElement)
-	local function setColors()
-		guiElement.ScrollBarImageColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.ScrollBar)
+function module.SyncGuiElementScrollColor(GuiElement)
+	local function SetColors()
+		GuiElement.ScrollBarImageColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.ScrollBar)
 	end
-	settings().Studio.ThemeChanged:Connect(setColors)
-	setColors()
+	settings().Studio.ThemeChanged:Connect(SetColors)
+	SetColors()
 end
 
 -- A frame with standard styling.
-function module.MakeFrame(name)
-	local frame = Instance.new("Frame")
-	frame.Name = name
-	frame.BackgroundTransparency = 0
-	frame.BorderSizePixel = 0
+function module.MakeFrame(Name)
+	local Frame = Instance.new("Frame")
+	Frame.Name = Name
+	Frame.BackgroundTransparency = 0
+	Frame.BorderSizePixel = 0
 
-	module.syncGuiElementBackgroundColor(frame)
+	module.SyncGuiElementBackgroundColor(Frame)
 
-	return frame
+	return Frame
 end
-	
 
 -- A frame that is a whole line, containing some arbitrary sized widget.
-function module.MakeFixedHeightFrame(name, height)
-	local frame = module.MakeFrame(name)
-	frame.Size = UDim2.new(1, 0, 0, height)
+function module.MakeFixedHeightFrame(Name, Height)
+	local Frame = module.MakeFrame(Name)
+	Frame.Size = UDim2.new(1, 0, 0, Height)
 
-	return frame
+	return Frame
 end
 
--- A frame that is one standard-sized line, containing some standard-sized widget (label, edit box, dropdown, 
+-- A frame that is one standard-sized line, containing some standard-sized widget (label, edit box, dropdown,
 -- checkbox)
-function module.MakeStandardFixedHeightFrame(name)
-	return module.MakeFixedHeightFrame(name, module.kStandardPropertyHeight)
+function module.MakeStandardFixedHeightFrame(Name)
+	return module.MakeFixedHeightFrame(Name, module.StandardPropertyHeight)
 end
 
-function module.AdjustHeightDynamicallyToLayout(frame, uiLayout, optPadding)
-	if (not optPadding) then 
-		optPadding = 0
-	end
+function module.AdjustHeightDynamicallyToLayout(Frame, UiLayout: UIListLayout, OptPadding: number?)
+	local OptPadding = OptPadding or 0
 
-	local function updateSizes()
-		frame.Size = UDim2.new(1, 0, 0, uiLayout.AbsoluteContentSize.Y + optPadding)
+	local function UpdateSizes()
+		Frame.Size = UDim2.new(1, 0, 0, UiLayout.AbsoluteContentSize.Y + OptPadding)
 	end
-	uiLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSizes)
-	updateSizes()
+	UiLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateSizes)
+	UpdateSizes()
 end
 
 -- Assumes input frame has a List layout with sort order layout order.
 -- Add frames in order as siblings of list layout, they will be laid out in order.
 -- Color frame background accordingly.
-function module.AddStripedChildrenToListFrame(listFrame, frames)
-	for index, frame in ipairs(frames) do 
-		frame.Parent = listFrame
-		frame.LayoutOrder = index
-		frame.BackgroundTransparency = 0
-		frame.BorderSizePixel = 1
-		module.syncGuiElementStripeColor(frame)
-		module.syncGuiElementBorderColor(frame)
+function module.AddStripedChildrenToListFrame(ListFrame, Frames)
+	for Index, Frame in ipairs(Frames) do
+		Frame.Parent = ListFrame
+		Frame.LayoutOrder = Index
+		Frame.BackgroundTransparency = 0
+		Frame.BorderSizePixel = 1
+		module.SyncGuiElementStripeColor(Frame)
+		module.SyncGuiElementBorderColor(Frame)
 	end
 end
 
-local function MakeSectionInternal(parentGui, name, title, contentHeight)
-	local frame = Instance.new("Frame")
-	frame.Name = name
-	frame.BackgroundTransparency = 1
-	frame.Parent = parentGui
-	frame.BackgroundTransparency = 1
-	frame.BorderSizePixel = 0
-	
+local function MakeSectionInternal(ParentGui, Name, Title, ContentHeight)
+	local Frame = Instance.new("Frame")
+	Frame.Name = Name
+	Frame.BackgroundTransparency = 1
+	Frame.Parent = ParentGui
+	Frame.BackgroundTransparency = 1
+	Frame.BorderSizePixel = 0
+
 	-- If title is "nil', no title bar.
-	local contentYOffset = 0
-	local titleBar = nil
-	if (title ~= nil) then  
-		local titleBarFrame = Instance.new("Frame")
-		titleBarFrame.Name = "TitleBarFrame"
-		titleBarFrame.Parent = frame
-		titleBarFrame.Position = UDim2.new(0, 0, 0, 0)
-		titleBarFrame.LayoutOrder = 0
+	local ContentYOffset = 0
+	local TitleBar = nil
+	if Title ~= nil then
+		local TitleBarFrame = Instance.new("Frame")
+		TitleBarFrame.Name = "TitleBarFrame"
+		TitleBarFrame.Parent = Frame
+		TitleBarFrame.Position = UDim2.new(0, 0, 0, 0)
+		TitleBarFrame.LayoutOrder = 0
 
-		local titleBar = Instance.new("TextLabel")
-		titleBar.Name = "TitleBarLabel"
-		titleBar.Text = title
-		titleBar.Parent = titleBarFrame
-		titleBar.BackgroundTransparency = 1
-		titleBar.Position = UDim2.new(0, module.kStandardHMargin, 0, 0)
+		local TitleBarLabel = Instance.new("TextLabel")
+		TitleBarLabel.Name = "TitleBarLabel"
+		TitleBarLabel.Text = Title
+		TitleBarLabel.Parent = TitleBarFrame
+		TitleBarLabel.BackgroundTransparency = 1
+		TitleBarLabel.Position = UDim2.new(0, module.StandardHMargin, 0, 0)
 
-		module.syncGuiElementFontColor(titleBar)
-	
-		contentYOffset = contentYOffset + module.kTitleBarHeight
+		module.SyncGuiElementFontColor(TitleBarLabel)
+
+		ContentYOffset = ContentYOffset + module.TitleBarHeight
 	end
 
-	frame.Size = UDim2.new(1, 0, 0, contentYOffset + contentHeight)
+	Frame.Size = UDim2.new(1, 0, 0, ContentYOffset + ContentHeight)
 
-	return frame
+	return Frame
 end
 
-function  module.MakeFrameAutoPushEnd(Frame : Instance,ScalePercent)
+function module.MakeFrameAutoPushEnd(Frame: GuiObject, ScalePercent)
 	local ParentWidget = Frame:FindFirstAncestorWhichIsA("DockWidgetPluginGui")
 	local CurrentParentSizeCon
 	local function SetSize()
-		if not ParentWidget then return end
+		if not ParentWidget then
+			return
+		end
 		local FrameSize = ParentWidget.AbsoluteSize
 		local RightInset = FrameSize.X * (1 - ScalePercent)
-		Frame.Size = UDim2.new(
-			0,
-			FrameSize.X - Frame.Position.X.Offset - RightInset,
-			Frame.Size.Y.Scale,
-			Frame.Size.Y.Offset
-		)
+		Frame.Size =
+			UDim2.new(0, FrameSize.X - Frame.Position.X.Offset - RightInset, Frame.Size.Y.Scale, Frame.Size.Y.Offset)
 	end
 	Frame.AncestryChanged:Connect(function()
 		ParentWidget = Frame:FindFirstAncestorWhichIsA("DockWidgetPluginGui")
@@ -244,62 +243,64 @@ function  module.MakeFrameAutoPushEnd(Frame : Instance,ScalePercent)
 	end
 end
 
-function module.MakeStandardPropertyLabel(text, opt_ignoreThemeUpdates)
-	local label = Instance.new('TextLabel')
-	label.Name = 'Label'
-	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.SourceSans                    --todo: input spec font
-	label.TextSize = 15                                  --todo: input spec font size
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Text = text
-	label.AnchorPoint = Vector2.new(0, 0.5)
-	label.Position = UDim2.new(0, module.StandardLineLabelLeftMargin, 0.5, module.kTextVerticalFudge)
-	label.Size = UDim2.new(0, module.StandardLineLabelWidth, 1, 0)
+function module.MakeStandardPropertyLabel(Text, OptIgnoreThemeUpdates: boolean?)
+	local Label = Instance.new("TextLabel")
+	Label.Name = "Label"
+	Label.BackgroundTransparency = 1
+	Label.Font = Enum.Font.SourceSans --todo: input spec font
+	Label.TextSize = 15 --todo: input spec font size
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Text = Text
+	Label.AnchorPoint = Vector2.new(0, 0.5)
+	Label.Position = UDim2.new(0, module.StandardLineLabelLeftMargin, 0.5, module.TextVerticalFudge)
+	Label.Size = UDim2.new(0, module.StandardLineLabelWidth, 1, 0)
 
-	if (not opt_ignoreThemeUpdates) then 			
-		module.syncGuiElementFontColor(label)
+	if not OptIgnoreThemeUpdates then
+		module.SyncGuiElementFontColor(Label)
 	end
 
-	return label
+	return Label
 end
 
-function module.MakeFrameWithSubSectionLabel(name, text)
-	local row = module.MakeFixedHeightFrame(name, module.kSubSectionLabelHeight)
-	row.BackgroundTransparency = 1
-		
-	local label = module.MakeStandardPropertyLabel(text)
-	label.BackgroundTransparency = 1
-	label.Parent = row
+function module.MakeFrameWithSubSectionLabel(Name, Text)
+	local Row = module.MakeFixedHeightFrame(Name, module.SubSectionLabelHeight)
+	Row.BackgroundTransparency = 1
 
-	return row
+	local Label = module.MakeStandardPropertyLabel(Text)
+	Label.BackgroundTransparency = 1
+	Label.Parent = Row
+
+	return Row
 end
 
-function module.MakeFrameAutoScalingList(frame,uiListLayout)
-	uiListLayout = uiListLayout or Instance.new("UIListLayout")
-	uiListLayout.Parent = frame
-	uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+function module.MakeFrameAutoScalingList(Frame: GuiObject, UiListLayout: UIListLayout?)
+	local UiListLayout = UiListLayout or Instance.new("UIListLayout")
+	UiListLayout.Parent = Frame
+	UiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-	module.AdjustHeightDynamicallyToLayout(frame, uiListLayout)
+	module.AdjustHeightDynamicallyToLayout(Frame, UiListLayout)
 end
 
-function module.GetAncestralBoundingBox(Frame)
-	local BoundingCorner1,BoundingCorner2
+function module.GetAncestralBoundingBox(Frame): (Vector2, Vector2)
+	local BoundingCorner1, BoundingCorner2
 	local CurrentFrame = Frame
 	while CurrentFrame.Parent do
 		CurrentFrame = CurrentFrame.Parent
-		if not CurrentFrame:IsA("GuiBase2d") then continue end
+		if not CurrentFrame:IsA("GuiBase2d") then
+			continue
+		end
 		local IsWidget = CurrentFrame:IsA("DockWidgetPluginGui")
 		if IsWidget or CurrentFrame.ClipsDescendants then
 			if BoundingCorner1 then
 				local CurrentPosCorner1 = (IsWidget and Vector2.new() or CurrentFrame.AbsolutePosition)
 				local CurrentPosCorner2 = CurrentPosCorner1 + CurrentFrame.AbsoluteSize
 				BoundingCorner1 = Vector2.new(
-					math.max(BoundingCorner1.X,CurrentPosCorner1.X),
-					math.max(BoundingCorner1.Y,CurrentPosCorner1.Y)
+					math.max(BoundingCorner1.X, CurrentPosCorner1.X),
+					math.max(BoundingCorner1.Y, CurrentPosCorner1.Y)
 				)
 				BoundingCorner2 = Vector2.new(
-					math.min(BoundingCorner2.X,CurrentPosCorner2.X),
-					math.min(BoundingCorner2.Y,CurrentPosCorner2.Y)
+					math.min(BoundingCorner2.X, CurrentPosCorner2.X),
+					math.min(BoundingCorner2.Y, CurrentPosCorner2.Y)
 				)
 			else
 				BoundingCorner1 = (IsWidget and Vector2.new() or CurrentFrame.AbsolutePosition)
@@ -308,9 +309,10 @@ function module.GetAncestralBoundingBox(Frame)
 		end
 	end
 	if BoundingCorner1 then
-		return BoundingCorner1,BoundingCorner2-BoundingCorner1
+		return BoundingCorner1, BoundingCorner2 - BoundingCorner1
 	end
-end
 
+	return Frame.AbsolutePosition, Frame.AbsolutePosition + Frame.AbsoluteSize
+end
 
 return module

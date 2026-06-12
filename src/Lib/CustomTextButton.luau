@@ -6,94 +6,93 @@
 --
 ----------------------------------------
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
+local Types = require(script.Parent.Parent.Types)
 
 local BUTTON_DEFAULT_IMAGE = "rbxasset://textures/TerrainTools/button_default.png"
 
 local Class = {}
 Class.__index = Class
 
+type CustomTextButton = Types.CustomTextButton
+
 type Config = {
 	Title: string
 }
 
-function Class.new(Data: Config)
-
-	local self = setmetatable({}, Class)
+function Class.new(Data: Config): CustomTextButton
+	local self = (setmetatable({}, Class) :: never) :: CustomTextButton
 
 	self.LabelText = Data.Title
 
-	local button = Instance.new('ImageButton')
-	button.Image = BUTTON_DEFAULT_IMAGE
-	button.ImageColor3 = Color3.new(0.243137, 0.243137, 0.243137)
-	button.BackgroundTransparency = 1
-	button.ScaleType = Enum.ScaleType.Slice
-	button.SliceCenter = Rect.new(7, 7, 156, 36)
-	button.AutoButtonColor = false
+	local Button = Instance.new('ImageButton')
+	Button.Image = BUTTON_DEFAULT_IMAGE
+	Button.ImageColor3 = Color3.new(0.243137, 0.243137, 0.243137)
+	Button.BackgroundTransparency = 1
+	Button.ScaleType = Enum.ScaleType.Slice
+	Button.SliceCenter = Rect.new(7, 7, 156, 36)
+	Button.AutoButtonColor = false
 
-	local label = Instance.new('TextLabel')
-	label.Text = self.LabelText
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1, 0, 1, GuiUtilities.kButtonVerticalFudge)
-	label.Font = Enum.Font.SourceSans                  
-	label.TextSize = 15         
-	label.TextColor3 = Color3.new(0.886275, 0.886275, 0.886275)
-	label.Parent = button
+	local Label = Instance.new('TextLabel')
+	Label.Text = self.LabelText
+	Label.BackgroundTransparency = 1
+	Label.Size = UDim2.new(1, 0, 1, GuiUtilities.ButtonVerticalFudge)
+	Label.Font = Enum.Font.SourceSans
+	Label.TextSize = 15
+	Label.TextColor3 = Color3.new(0.886275, 0.886275, 0.886275)
+	Label.Parent = Button
 
-	self._label = label
-	self._button = button
+	self.Label = Label
+	self.Button = Button
 
-	self._clicked = false
-	self._hovered = false
+	self.Clicked = false
+	self.Hovered = false
 
-	button.InputBegan:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseMovement) then               
-			self._hovered = true
-			self:_updateButtonVisual()
+	Button.InputBegan:Connect(function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
+			self.Hovered = true
+			self:UpdateButtonVisual()
 		end
 	end)
 
-
-	button.InputEnded:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseMovement) then               
-			self._hovered = false
-			self._clicked = false
-			self:_updateButtonVisual()
+	Button.InputEnded:Connect(function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
+			self.Hovered = false
+			self.Clicked = false
+			self:UpdateButtonVisual()
 		end
-	end)    
-
-	button.MouseButton1Down:Connect(function()
-		self._clicked = true
-		self:_updateButtonVisual()
 	end)
 
-	button.MouseButton1Up:Connect(function()
-		self._clicked = false
-		self:_updateButtonVisual()
+	Button.MouseButton1Down:Connect(function()
+		self.Clicked = true
+		self:UpdateButtonVisual()
 	end)
-	
-	self:_updateButtonVisual()
+
+	Button.MouseButton1Up:Connect(function()
+		self.Clicked = false
+		self:UpdateButtonVisual()
+	end)
+
+	self:UpdateButtonVisual()
 
 	return self
 end
 
-function Class:_updateButtonVisual()
-	if (self._clicked) then 
-		self._button.ImageColor3 = Color3.new(0.184314, 0.184314, 0.184314)
-		--self._label.TextColor3 = GuiUtilities.kPressedButtonTextColor
-	elseif (self._hovered) then 
-		self._button.ImageColor3 = Color3.new(0.27451, 0.27451, 0.27451)
-		--self._label.TextColor3 = GuiUtilities.kStandardButtonTextColor
+function Class:UpdateButtonVisual()
+	local self = self :: CustomTextButton
+
+	if (self.Clicked) then
+		self.Button.ImageColor3 = Color3.new(0.184314, 0.184314, 0.184314)
+	elseif (self.Hovered) then
+		self.Button.ImageColor3 = Color3.new(0.27451, 0.27451, 0.27451)
 	else
-		self._button.ImageColor3 = Color3.new(0.243137, 0.243137, 0.243137)
-		--self._label.TextColor3 = GuiUtilities.kStandardButtonTextColor
+		self.Button.ImageColor3 = Color3.new(0.243137, 0.243137, 0.243137)
 	end
 end
 
--- Backwards compatibility (should be removed in the future)
--- CustomTextButtonClass.getButton = CustomTextButtonClass.GetButton
-
 function Class:GetFrame()
-	return self._button
+	local self = self :: CustomTextButton
+
+	return self.Button
 end
 
 return Class

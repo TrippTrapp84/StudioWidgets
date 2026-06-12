@@ -6,8 +6,8 @@
 --
 ----------------------------------------
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
-
-local NULL = {}
+local Signal = require(script.Parent.Parent.Util.Signal)
+local Types = require(script.Parent.Parent.Types)
 
 local DEFAULT_LENGTH = 189
 local DEFAULT_EXPAND_TIME = 0.15
@@ -15,26 +15,8 @@ local DEFAULT_EXPAND_TIME = 0.15
 local Class = {}
 Class.__index = Class
 
-local function DefaultValues()
-	return {
-		Suffix = NULL,
-		LabelText = NULL,
-		ButtonInset = 0,
-		SelectionTable = {}
-	}
-end
-
-type DropdownOption = {
-	Name: string,
-	Value: unknown,
-
-	--[=[
-		Generally not necessary, but if you need support for multiple dropdown options with the same display name it is required.
-
-		The internal Id used to uniquely identify this option. If `Identifier == nil`, `Name` is used as the identifier instead
-	]=]
-	Identifier: string?
-}
+type DropdownOption = Types.DropdownOption
+type LabeledDropdownMenu = Types.LabeledDropdownMenu
 
 type Config = {
 	Title: string,
@@ -42,83 +24,79 @@ type Config = {
 	Options: {DropdownOption}?
 }
 
-function Class.new(Data: Config)
-	local self = setmetatable({}, Class)
+function Class.new(Data: Config): LabeledDropdownMenu
+	local self = (setmetatable({}, Class) :: never) :: LabeledDropdownMenu
 
 	self.Title = Data.Title
 	self.Inset = Data.Inset or 0
 	self.Options = Data.Options or {}
 
-	self._dropdownButtonHeight = GuiUtilities.kTitleBarHeight -- should be 27
-	self._expandedSize = 0
-	
-	self._SelectionChangedFunction = nil
+	self.DropdownButtonHeight = GuiUtilities.TitleBarHeight -- should be 27
+	self.ExpandedSize = 0
 
-	local section = GuiUtilities.MakeStandardFixedHeightFrame('DMSection')
-	self._sectionFrame = section
+	self.SelectionChanged = Signal.new()
 
-	local label = GuiUtilities.MakeStandardPropertyLabel(self.Title)
-	label.Parent = section
+	local Section = GuiUtilities.MakeStandardFixedHeightFrame('DMSection')
+	self.SectionFrame = Section
 
+	local Label = GuiUtilities.MakeStandardPropertyLabel(self.Title)
+	Label.Parent = Section
 
-	local button = Instance.new("TextButton")
-	button.Text = "Select an option"
-	button.Size = UDim2.new(0, 100, 0.6, 0)
-	button.AnchorPoint = Vector2.new(0,0.5)
-	button.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + self.Inset, 0.5, 0)
-	button.Parent = section
-	GuiUtilities.syncGuiElementBorderColor(button)
-	GuiUtilities.syncGuiElementInputFieldColor(button)
-	GuiUtilities.syncGuiElementFontColor(button)
+	local Button = Instance.new("TextButton")
+	Button.Text = "Select an option"
+	Button.Size = UDim2.new(0, 100, 0.6, 0)
+	Button.AnchorPoint = Vector2.new(0, 0.5)
+	Button.Position = UDim2.new(0, GuiUtilities.StandardLineElementLeftMargin + self.Inset, 0.5, 0)
+	Button.Parent = Section
+	GuiUtilities.SyncGuiElementBorderColor(Button)
+	GuiUtilities.SyncGuiElementInputFieldColor(Button)
+	GuiUtilities.SyncGuiElementFontColor(Button)
 
-	local invisFrame = Instance.new("Frame")
-	invisFrame.Size = UDim2.new(1,0,0,0)
-	invisFrame.AnchorPoint = Vector2.new(0.5,0)
-	invisFrame.Position = UDim2.new(0.5,0,1,0)
-	invisFrame.BackgroundTransparency = 1
-	invisFrame.ClipsDescendants = true
-	invisFrame.Parent = button 
+	local InvisFrame = Instance.new("Frame")
+	InvisFrame.Size = UDim2.new(1, 0, 0, 0)
+	InvisFrame.AnchorPoint = Vector2.new(0.5, 0)
+	InvisFrame.Position = UDim2.new(0.5, 0, 1, 0)
+	InvisFrame.BackgroundTransparency = 1
+	InvisFrame.ClipsDescendants = true
+	InvisFrame.Parent = Button
 
+	local ContentsFrame = Instance.new("ScrollingFrame")
+	ContentsFrame.CanvasSize = UDim2.new(1, 0, 0, 0)
+	ContentsFrame.ScrollBarThickness = 0
+	ContentsFrame.Size = UDim2.new(1, -2, 0, self.ExpandedSize)
+	ContentsFrame.AnchorPoint = Vector2.new(0.5, 0)
+	ContentsFrame.Position = UDim2.new(0.5, 0, 0, 0)
+	ContentsFrame.BorderSizePixel = 1
+	ContentsFrame.ZIndex = 9
+	ContentsFrame.Parent = InvisFrame
+	GuiUtilities.SyncGuiElementInputFieldColor(ContentsFrame)
+	GuiUtilities.SyncGuiElementBorderColor(ContentsFrame)
 
-	local contentsFrame = Instance.new("ScrollingFrame")
-	contentsFrame.CanvasSize = UDim2.new(1,0,0,0)
-	contentsFrame.ScrollBarThickness = 0
-	contentsFrame.Size = UDim2.new(1,-2,0,self._expandedSize)
-	contentsFrame.AnchorPoint = Vector2.new(0.5,0)
-	contentsFrame.Position = UDim2.new(0.5,0,0,0)
-	contentsFrame.BorderSizePixel = 1
-	contentsFrame.ZIndex = 9
-	contentsFrame.Parent = invisFrame
-	GuiUtilities.syncGuiElementInputFieldColor(contentsFrame)
-	GuiUtilities.syncGuiElementBorderColor(contentsFrame)
+	local ListLayout = Instance.new("UIListLayout")
+	ListLayout.FillDirection = Enum.FillDirection.Vertical
+	ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	ListLayout.SortOrder = Enum.SortOrder.Name
+	ListLayout.Parent = ContentsFrame
 
-	local listLayout = Instance.new("UIListLayout")
-	listLayout.FillDirection = Enum.FillDirection.Vertical
-	listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	listLayout.SortOrder = Enum.SortOrder.Name
-	listLayout.Parent = contentsFrame
+	self.TitleLabel = Label
+	self.DropButton = Button
+	self.ContentsFrame = ContentsFrame
+	self.InvisFrame = InvisFrame
+	self.ButtonArray = {}
+	self.Selected = ""
+	self.Expanded = false
+	self.DropdownDB = false
 
-
-	self._titleLabel = label
-	self._dropButton = button
-	self._contentsFrame = contentsFrame
-	self._invisFrame = invisFrame
-	self._buttonArray = {}
-	self._selected = ""
-	self._expanded = false
-
-	self._dropdownDB = false
-
-	self._dropButton.MouseButton1Click:Connect(function()
-		if self._dropdownDB then return end
-		self._dropdownDB = true
-		self:_toggleExpand()
+	self.DropButton.MouseButton1Click:Connect(function()
+		if self.DropdownDB then return end
+		self.DropdownDB = true
+		self:ToggleExpand()
 	end)
 
-	self._dropButton.MouseButton2Click:Connect(function()
-		if self._dropdownDB then return end
-		self._dropdownDB = true
-		self:_retract()
+	self.DropButton.MouseButton2Click:Connect(function()
+		if self.DropdownDB then return end
+		self.DropdownDB = true
+		self:Retract()
 		self:ResetChoice()
 	end)
 
@@ -127,163 +105,179 @@ function Class.new(Data: Config)
 	return self
 end
 
-function Class:SetSelectionChangedFunction(scf)
-	self._SelectionChangedFunction = scf
-end
+function Class:ToggleExpand()
+	local self = self :: LabeledDropdownMenu
 
-function Class:_toggleExpand()
 	-- get the widget
-	local widget = self._invisFrame:FindFirstAncestorOfClass("DockWidgetPluginGui")
-	if widget then
+	local Widget = self.InvisFrame:FindFirstAncestorOfClass("DockWidgetPluginGui")
+	if Widget then
 		-- now test if the bottom of the frame is below the absolute size of the widget
-		local absAdded = self._contentsFrame.AbsolutePosition.Y + self._contentsFrame.AbsoluteSize.Y
+		local AbsAdded = self.ContentsFrame.AbsolutePosition.Y + self.ContentsFrame.AbsoluteSize.Y
 
-		local BoundingPos,BoundingSize = GuiUtilities.GetAncestralBoundingBox(self._invisFrame)
+		local BoundingPos, BoundingSize = GuiUtilities.GetAncestralBoundingBox(self.InvisFrame)
 
-		if not self._expanded then
-			print(absAdded,BoundingPos.Y + BoundingSize.Y)
-			if absAdded >= BoundingPos.Y + BoundingSize.Y then
-				self._contentsFrame.AnchorPoint = Vector2.new(0.5,1)
-				self._contentsFrame.Position = UDim2.new(0.5,0,1,0)
-				self._invisFrame.AnchorPoint = Vector2.new(0.5,1)
-				self._invisFrame.Position = UDim2.new(0.5,0,0,0)
+		if not self.Expanded then
+			print(AbsAdded, BoundingPos.Y + BoundingSize.Y)
+			if AbsAdded >= BoundingPos.Y + BoundingSize.Y then
+				self.ContentsFrame.AnchorPoint = Vector2.new(0.5, 1)
+				self.ContentsFrame.Position = UDim2.new(0.5, 0, 1, 0)
+				self.InvisFrame.AnchorPoint = Vector2.new(0.5, 1)
+				self.InvisFrame.Position = UDim2.new(0.5, 0, 0, 0)
 			else
-				self._contentsFrame.AnchorPoint = Vector2.new(0.5,0)
-				self._contentsFrame.Position = UDim2.new(0.5,0,0,0)
-				self._invisFrame.AnchorPoint = Vector2.new(0.5,0)
-				self._invisFrame.Position = UDim2.new(0.5,0,1,0)
+				self.ContentsFrame.AnchorPoint = Vector2.new(0.5, 0)
+				self.ContentsFrame.Position = UDim2.new(0.5, 0, 0, 0)
+				self.InvisFrame.AnchorPoint = Vector2.new(0.5, 0)
+				self.InvisFrame.Position = UDim2.new(0.5, 0, 1, 0)
 			end
 		end
 	end
 
-	if self._expanded then
-		self:_retract()
-		self._expanded = false
+	if self.Expanded then
+		self:Retract()
+		self.Expanded = false
 	else
-		self:_expand()
-		self._expanded = true
+		self:Expand()
+		self.Expanded = true
 	end
 end
 
-function Class:_retract()
-	self._invisFrame:TweenSize(UDim2.new(1,2,0,0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true,function()
+function Class:Retract()
+	local self = self :: LabeledDropdownMenu
+
+	self.InvisFrame:TweenSize(UDim2.new(1, 2, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true, function()
 		wait(DEFAULT_EXPAND_TIME)
-		self._dropdownDB = false
-		self._contentsFrame.AnchorPoint = Vector2.new(0.5,0)
-		self._contentsFrame.Position = UDim2.new(0.5,0,0,0)
-		self._invisFrame.AnchorPoint = Vector2.new(0.5,0)
-		self._invisFrame.Position = UDim2.new(0.5,0,1,0)
+		self.DropdownDB = false
+		self.ContentsFrame.AnchorPoint = Vector2.new(0.5, 0)
+		self.ContentsFrame.Position = UDim2.new(0.5, 0, 0, 0)
+		self.InvisFrame.AnchorPoint = Vector2.new(0.5, 0)
+		self.InvisFrame.Position = UDim2.new(0.5, 0, 1, 0)
 	end)
-	self._expanded = false
+	self.Expanded = false
 end
 
-function Class:_expand()
-	self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize+2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true,function()
+function Class:Expand()
+	local self = self :: LabeledDropdownMenu
+
+	self.InvisFrame:TweenSize(UDim2.new(1, 2, 0, self.ExpandedSize + 2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true, function()
 		wait(DEFAULT_EXPAND_TIME)
-		self._dropdownDB = false
+		self.DropdownDB = false
 	end)
-	self._expanded = true
+	self.Expanded = true
 end
 
 function Class:AddSelection(Selection: DropdownOption)
+	local self = self :: LabeledDropdownMenu
+
 	local Id = Selection.Identifier or Selection.Name
-	if self._buttonArray[Id] then -- if the selection already exists
-		return warn("There is already a selection with identifier: ".. Id)
+	if self.ButtonArray[Id] then -- if the selection already exists
+		return warn("There is already a selection with identifier: " .. Id)
 	end
 
-	local button = Instance.new("TextButton")
-	button.Name = Id
-	button.Text = Selection.Name
-	button.Size = UDim2.new(1,0,0,self._dropdownButtonHeight)
-	button.BackgroundTransparency = 1
-	button.ZIndex = 10
-	button.Parent = self._contentsFrame
-	GuiUtilities.syncGuiElementFontColor(button)
-	
-	local function ActivateButton(InternalTrigger)
-		self._selected = Selection.Value
-		self._dropButton.Text = Selection.Name
-		self:_retract()
-		if self._SelectionChangedFunction then
-			self._SelectionChangedFunction(self._selected,InternalTrigger)
-		end
+	local Button = Instance.new("TextButton")
+	Button.Name = Id
+	Button.Text = Selection.Name
+	Button.Size = UDim2.new(1, 0, 0, self.DropdownButtonHeight)
+	Button.BackgroundTransparency = 1
+	Button.ZIndex = 10
+	Button.Parent = self.ContentsFrame
+	GuiUtilities.SyncGuiElementFontColor(Button)
+
+	local function ActivateButton(InternalTrigger: boolean?)
+		self.Selected = Selection.Value
+		self.DropButton.Text = Selection.Name
+		self:Retract()
+		self.SelectionChanged:Fire(self.Selected, InternalTrigger or false)
 	end
 
-	local connection = button.MouseButton1Click:Connect(ActivateButton)
+	local Connection = Button.MouseButton1Click:Connect(ActivateButton)
 
-	self._buttonArray[Id] = {button = button, connection = connection,activate = ActivateButton}
+	self.ButtonArray[Id] = {Button = Button, Connection = Connection, Activate = ActivateButton}
 
-	-- change contentsFrame size. Remember to do this at the end next time.
-	self:_updateSize()
+	-- change ContentsFrame size. Remember to do this at the end next time.
+	self:UpdateSize()
 end
 
-function Class:RemoveSelection(identifier)
-	if self._buttonArray[identifier] then
-		self._buttonArray[identifier].connection:Disconnect()
-		self._buttonArray[identifier].button:Destroy()
-		self._buttonArray[identifier] = nil
-		self:_updateSize() -- resize frame
+function Class:RemoveSelection(Identifier: string)
+	local self = self :: LabeledDropdownMenu
+
+	if self.ButtonArray[Identifier] then
+		self.ButtonArray[Identifier].Connection:Disconnect()
+		self.ButtonArray[Identifier].Button:Destroy()
+		self.ButtonArray[Identifier] = nil
+		self:UpdateSize() -- resize frame
 	end
 end
 
-function Class:AddSelectionsFromTable(selectionTable)
-	assert(type(selectionTable) == "table", "Expected table. Got "..type(selectionTable))
+function Class:AddSelectionsFromTable(SelectionTable: {DropdownOption})
+	local self = self :: LabeledDropdownMenu
 
-	for i,v in pairs(selectionTable) do
-		if type(v) == "table" then
-			self:AddSelection(v)
+	assert(type(SelectionTable) == "table", "Expected table. Got " .. type(SelectionTable))
+
+	for I, V in pairs(SelectionTable) do
+		if type(V) == "table" then
+			self:AddSelection(V)
 		end
 	end
 end
 
 function Class:ResetChoice()
-	self._selected = ""
-	self._dropButton.Text = "Select an option"
+	local self = self :: LabeledDropdownMenu
+
+	self.Selected = ""
+	self.DropButton.Text = "Select an option"
 end
 
-function Class:SetChoice(id)
-	if self._buttonArray[id] then
-		self._buttonArray[id].activate(true)
+function Class:SetChoice(Id: string)
+	local self = self :: LabeledDropdownMenu
+
+	if self.ButtonArray[Id] then
+		self.ButtonArray[Id].Activate(true)
 	end
 end
 
 function Class:GetChoice()
-	return self._selected
+	local self = self :: LabeledDropdownMenu
+
+	return self.Selected
 end
 
 function Class:GetFrame()
-	return self._sectionFrame
+	local self = self :: LabeledDropdownMenu
+
+	return self.SectionFrame
 end
 
-function Class:ChangeLabel(labelText)
-	assert(type(labelText) == "string", "Expected string. Got "..type(labelText))
-	self._titleLabel.Text = labelText
+function Class:ChangeLabel(LabelText: string)
+	local self = self :: LabeledDropdownMenu
+
+	assert(type(LabelText) == "string", "Expected string. Got " .. type(LabelText))
+	self.TitleLabel.Text = LabelText
 end
 
-function Class:_updateSize()
-	local count = 0
-	for _,v in pairs(self._buttonArray) do
-		count += 1
+function Class:UpdateSize()
+	local self = self :: LabeledDropdownMenu
+
+	local Count = 0
+	for _, V in pairs(self.ButtonArray) do
+		Count += 1
 	end
-	if count >= 7 then
-		self._canvasSize = count*self._dropdownButtonHeight
-		self._expandedSize = DEFAULT_LENGTH
-		self._contentsFrame.CanvasSize = UDim2.new(1,-2,0,self._canvasSize)
-		self._contentsFrame.Size = UDim2.new(1,-2,0,self._expandedSize)
-		if self._expanded then
-			self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.15, true)
+	if Count >= 7 then
+		self.CanvasSize = Count * self.DropdownButtonHeight
+		self.ExpandedSize = DEFAULT_LENGTH
+		self.ContentsFrame.CanvasSize = UDim2.new(1, -2, 0, self.CanvasSize)
+		self.ContentsFrame.Size = UDim2.new(1, -2, 0, self.ExpandedSize)
+		if self.Expanded then
+			self.InvisFrame:TweenSize(UDim2.new(1, 2, 0, self.ExpandedSize), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.15, true)
 		end
 	else
-		self._canvasSize = count*self._dropdownButtonHeight
-		self._expandedSize = count*self._dropdownButtonHeight
-
-		self._contentsFrame.CanvasSize = UDim2.new(1,-2,0,self._canvasSize)
-		self._contentsFrame.Size = UDim2.new(1,-2,0,self._expandedSize)
-		if self._expanded then
-			self._invisFrame:TweenSize(UDim2.new(1,2,0,self._expandedSize), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.15, true)
+		self.CanvasSize = Count * self.DropdownButtonHeight
+		self.ExpandedSize = Count * self.DropdownButtonHeight
+		self.ContentsFrame.CanvasSize = UDim2.new(1, -2, 0, self.CanvasSize)
+		self.ContentsFrame.Size = UDim2.new(1, -2, 0, self.ExpandedSize)
+		if self.Expanded then
+			self.InvisFrame:TweenSize(UDim2.new(1, 2, 0, self.ExpandedSize), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.15, true)
 		end
 	end
-
 end
 
 --// RETURN

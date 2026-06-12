@@ -10,6 +10,8 @@ local RunService = game:GetService("RunService")
 
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 local PluginUtil = require(script.Parent.Parent.Util.Plugin)
+local Signal = require(script.Parent.Parent.Util.Signal)
+local Types = require(script.Parent.Parent.Types)
 
 local BOTTOM_PADDING = 10
 local RESIZE_LINE_THICKNESS = 5
@@ -18,6 +20,8 @@ local SCALING_MOUSE_ICON = "rbxasset://SystemCursors/SizeNS"
 local Class = {}
 Class.__index = Class
 
+type VerticallyResizableListFrame = Types.VerticallyResizableListFrame
+
 type Config = {
 	InitialHeight: number?,
 	MinimumHeight: number?,
@@ -25,56 +29,54 @@ type Config = {
 	HeightLocked: boolean?
 }
 
-function Class.new(Data: Config)
-	local self = setmetatable({}, Class)
+function Class.new(Data: Config): VerticallyResizableListFrame
+	local self = (setmetatable({}, Class) :: never) :: VerticallyResizableListFrame
 
 	self.MaximumHeight = Data.MaximumHeight or 300
 	self.MinimumHeight = Data.MinimumHeight or 100
 
-	self._resizeCallback = nil
-	self._widgetParent = nil
-	self._sizeLocked = Data.HeightLocked or false
-	
-	local frame = Instance.new('Frame')
-	frame.Name = 'VRLFrame'
-	frame.Size = UDim2.new(1, 0, 0, 0)
-	frame.BackgroundTransparency = 0
-	frame.BorderSizePixel = 0
-	GuiUtilities.syncGuiElementBackgroundColor(frame)
+	self.Resized = Signal.new()
+	self.WidgetParent = nil
+	self.SizeLocked = Data.HeightLocked or false
 
-	self._frame = frame
-	
-	local uiListLayout = Instance.new('UIListLayout')
-	uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	uiListLayout.Parent = frame
-	self._uiListLayout = uiListLayout
-	
+	local Frame = Instance.new('Frame')
+	Frame.Name = 'VRLFrame'
+	Frame.Size = UDim2.new(1, 0, 0, 0)
+	Frame.BackgroundTransparency = 0
+	Frame.BorderSizePixel = 0
+	GuiUtilities.SyncGuiElementBackgroundColor(Frame)
+
+	self.Frame = Frame
+
+	local UiListLayout = Instance.new('UIListLayout')
+	UiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	UiListLayout.Parent = Frame
+	self.UiListLayout = UiListLayout
+
 	local ResizeLine = Instance.new("ImageButton")
 	ResizeLine.Name = "VRLFrameResizeLine"
-	ResizeLine.Size = UDim2.new(1,0,0,RESIZE_LINE_THICKNESS)
-	ResizeLine.Position = UDim2.new(0,0,1,-RESIZE_LINE_THICKNESS)
+	ResizeLine.Size = UDim2.new(1, 0, 0, RESIZE_LINE_THICKNESS)
+	ResizeLine.Position = UDim2.new(0, 0, 1, -RESIZE_LINE_THICKNESS)
 	ResizeLine.Image = ""
 	ResizeLine.AutoButtonColor = false
 	ResizeLine.BorderSizePixel = 0
 	ResizeLine.LayoutOrder = 9000
-	ResizeLine.Parent = frame
-	GuiUtilities.syncGuiElementStripeColor(ResizeLine)
+	ResizeLine.Parent = Frame
+	GuiUtilities.SyncGuiElementStripeColor(ResizeLine)
 
-	local function updateSizes(NewSize)
-		NewSize = math.max(math.min(NewSize,self.MaximumHeight),self.MinimumHeight)
-		self._frame.Size = UDim2.new(1, 0, 0, NewSize-RESIZE_LINE_THICKNESS)
-		if (self._resizeCallback) then 
-			self._resizeCallback(NewSize)
-		end
+	local function UpdateSizes(NewSize: number)
+		NewSize = math.max(math.min(NewSize, self.MaximumHeight), self.MinimumHeight)
+		self.Frame.Size = UDim2.new(1, 0, 0, NewSize - RESIZE_LINE_THICKNESS)
+		self.Resized:Fire(NewSize)
 	end
-	
+
 	local Mouse = PluginUtil.GetPluginDistributorObject():GetMouse()
 	local MouseIsDragging = false
-	
+
 	ResizeLine.MouseEnter:Connect(function()
 		Mouse.Icon = SCALING_MOUSE_ICON
 	end)
-	
+
 	local PastLeave = tick()
 	ResizeLine.MouseLeave:Connect(function()
 		PastLeave = tick()
@@ -85,10 +87,10 @@ function Class.new(Data: Config)
 		end
 		Mouse.Icon = ""
 	end)
-	
-	ResizeLine.InputBegan:Connect(function(input)
-		if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-		if self._sizeLocked or not self._widgetParent then return end
+
+	ResizeLine.InputBegan:Connect(function(Input)
+		if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+		if self.SizeLocked or not self.WidgetParent then return end
 		local EndCon
 		local Ended = false
 		EndCon = ResizeLine.InputEnded:Connect(function(EndInput)
@@ -97,52 +99,56 @@ function Class.new(Data: Config)
 			EndCon:Disconnect()
 		end)
 		MouseIsDragging = true
-		local MPos = self._widgetParent:GetRelativeMousePosition()
+		local MPos = self.WidgetParent:GetRelativeMousePosition()
 		local Offset = MPos.Y - ResizeLine.AbsolutePosition.Y
 		while not Ended do
-			MPos = self._widgetParent:GetRelativeMousePosition()
-			local NewPos = MPos.Y - frame.AbsolutePosition.Y - Offset
-			updateSizes(NewPos)
+			MPos = self.WidgetParent:GetRelativeMousePosition()
+			local NewPos = MPos.Y - Frame.AbsolutePosition.Y - Offset
+			UpdateSizes(NewPos)
 			RunService.RenderStepped:Wait()
 		end
 		MouseIsDragging = false
 	end)
-	updateSizes(Data.InitialHeight or self.MaximumHeight)
-	
-	frame.AncestryChanged:Connect(function()
-		self._widgetParent = frame:FindFirstAncestorWhichIsA("DockWidgetPluginGui")
+	UpdateSizes(Data.InitialHeight or self.MaximumHeight)
+
+	Frame.AncestryChanged:Connect(function()
+		self.WidgetParent = Frame:FindFirstAncestorWhichIsA("DockWidgetPluginGui")
 	end)
-	
-	self._childCount = 0
+
+	self.ChildCount = 0
 
 	return self
 end
 
 function Class:AddBottomPadding()
-	local frame = Instance.new("Frame")
-	frame.Name = "BottomPadding"
-	frame.BackgroundTransparency = 1
-	frame.Size = UDim2.new(1, 0, 0, BOTTOM_PADDING)
-	frame.LayoutOrder = 1000
-	frame.Parent = self._frame
+	local self = self :: VerticallyResizableListFrame
+
+	local Frame = Instance.new("Frame")
+	Frame.Name = "BottomPadding"
+	Frame.BackgroundTransparency = 1
+	Frame.Size = UDim2.new(1, 0, 0, BOTTOM_PADDING)
+	Frame.LayoutOrder = 1000
+	Frame.Parent = self.Frame
 end
 
 function Class:GetFrame()
-	return self._frame
+	local self = self :: VerticallyResizableListFrame
+
+	return self.Frame
 end
 
-function Class:AddChild(childFrame)
-	childFrame.LayoutOrder = self._childCount
-	self._childCount = self._childCount + 1
-	childFrame.Parent = self._frame
+function Class:AddChild(ChildFrame: GuiObject)
+	local self = self :: VerticallyResizableListFrame
+
+	ChildFrame.LayoutOrder = self.ChildCount
+	self.ChildCount = self.ChildCount + 1
+	ChildFrame.Parent = self.Frame
 end
 
-function Class:SetCallbackOnResize(callback)
-	self._resizeCallback = callback
-end
+function Class:SetLocked(Locked: boolean)
+	local self = self :: VerticallyResizableListFrame
 
-function Class:SetLocked(locked)
-	self._sizeLocked = locked
+	self.SizeLocked = Locked
 end
 
 return Class

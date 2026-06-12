@@ -2,24 +2,25 @@
 --
 -- LabeledMultiChoice.lua
 --
--- Creates a frame containing a label and list of choices, of which exactly one 
+-- Creates a frame containing a label and list of choices, of which exactly one
 -- is always selected.
 --
 ----------------------------------------
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
+local Signal = require(script.Parent.Parent.Util.Signal)
+local Types = require(script.Parent.Parent.Types)
 local LabeledRadioButton = require(script.Parent.LabeledRadioButton)
 local LabeledCheckbox = require(script.Parent.LabeledCheckbox)
 local VerticallyScalingListFrame = require(script.Parent.VerticallyScalingListFrame)
 
-local RADIO_BUTTONS_HP_PADDING = GuiUtilities.kRadioButtonsHPadding
+local RADIO_BUTTONS_HP_PADDING = GuiUtilities.RadioButtonsHPadding
 
 local Class = {}
 Class.__index = Class
 
-type MultiChoiceOption = {
-	Name: string,
-	Value: unknown
-}
+type LabeledRadioButton = Types.LabeledRadioButton
+type LabeledMultiChoice = Types.LabeledMultiChoice
+type MultiChoiceOption = Types.MultiChoiceOption
 
 type Config = {
 	Title: string,
@@ -27,116 +28,112 @@ type Config = {
 	InitialChoice: number?
 }
 
-function Class.new(Data: Config)
-	local self = setmetatable({}, Class)
+function Class.new(Data: Config): LabeledMultiChoice
+	local self = (setmetatable({}, Class) :: never) :: LabeledMultiChoice
 
 	self.Title = Data.Title
 	self.Choices = Data.Choices or {}
 
-	self._buttonObjsByIndex = {}
+	self.ButtonObjsByIndex = {}
+	self.ValueChanged = Signal.new()
 
-	local vsl = VerticallyScalingListFrame.new()
-	vsl:AddBottomPadding()
+	local Vsl = VerticallyScalingListFrame.new()
+	Vsl:AddBottomPadding()
 
-	local titleLabel = GuiUtilities.MakeFrameWithSubSectionLabel("Title", self.Title)
-	vsl:AddChild(titleLabel)
+	local TitleLabel = GuiUtilities.MakeFrameWithSubSectionLabel("Title", self.Title)
+	Vsl:AddChild(TitleLabel)
 
 	-- Container for cells.
-	local cellFrame = self:_MakeRadioButtons(self.Choices)
-	vsl:AddChild(cellFrame)
+	local CellFrame = self:MakeRadioButtons(self.Choices)
+	Vsl:AddChild(CellFrame)
 
-	self._vsl = vsl
+	self.Vsl = Vsl
 
 	self:SetSelectedIndex(Data.InitialChoice or 0)
 
 	return self
 end
 
-function Class:SetSelectedIndex(selectedIndex) 
-	self._selectedIndex = selectedIndex
-	for i = 1, #self._buttonObjsByIndex do 
-		self._buttonObjsByIndex[i]:SetValue(i == selectedIndex)
+function Class:SetSelectedIndex(SelectedIndex: number)
+	local self = self :: LabeledMultiChoice
+
+	self.SelectedIndex = SelectedIndex
+	for I = 1, #self.ButtonObjsByIndex do
+		self.ButtonObjsByIndex[I]:SetValue(I == SelectedIndex)
 	end
 
-	if self._valueChangedFunction then 
-		self._valueChangedFunction(self._selectedIndex)
-	end
+	self.ValueChanged:Fire(self.SelectedIndex)
 end
 
 function Class:GetSelectedIndex()
-	return self._selectedIndex
-end
+	local self = self :: LabeledMultiChoice
 
-function Class:OnChanged<T>(vcf: ((Value: T?) -> ())?)
-	self._valueChangedFunction = if vcf then function(Index)
-		local Option = self.Options[Index]
-		if not Option then
-			vcf(nil)
-			return
-		end
-
-		vcf(Option.Value)
-	end else nil
+	return self.SelectedIndex
 end
 
 function Class:GetFrame()
-	return self._vsl:GetFrame()
-end
+	local self = self :: LabeledMultiChoice
 
+	return self.Vsl:GetFrame()
+end
 
 -- Small checkboxes are a different entity.
 -- All the bits are smaller.
 -- Fixed width instead of flood-fill.
 -- Box comes first, then label.
-function Class:_MakeRadioButtons(choices: {MultiChoiceOption})
-	local frame = GuiUtilities.MakeFrame("RadioButtons")
-	frame.BackgroundTransparency = 1
+function Class:MakeRadioButtons(Choices: {MultiChoiceOption})
+	local self = self :: LabeledMultiChoice
 
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, GuiUtilities.StandardLineLabelLeftMargin)
-	padding.PaddingRight = UDim.new(0, GuiUtilities.StandardLineLabelLeftMargin)
-	padding.Parent = frame
-	
+	local Frame = GuiUtilities.MakeFrame("RadioButtons")
+	Frame.BackgroundTransparency = 1
+
+	local Padding = Instance.new("UIPadding")
+	Padding.PaddingLeft = UDim.new(0, GuiUtilities.StandardLineLabelLeftMargin)
+	Padding.PaddingRight = UDim.new(0, GuiUtilities.StandardLineLabelLeftMargin)
+	Padding.Parent = Frame
+
 	-- Make a grid to put checkboxes in.
-	local uiGridLayout = Instance.new("UIGridLayout")
-	uiGridLayout.CellSize = LabeledCheckbox.MIN_FRAME_SIZE
-	uiGridLayout.CellPadding = UDim2.new(
+	local UiGridLayout = Instance.new("UIGridLayout")
+	UiGridLayout.CellSize = LabeledCheckbox.MIN_FRAME_SIZE
+	UiGridLayout.CellPadding = UDim2.new(
 		0,
 		RADIO_BUTTONS_HP_PADDING,
 		0,
-		GuiUtilities.kStandardVMargin
+		GuiUtilities.StandardVMargin
 	)
-	uiGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	uiGridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-	uiGridLayout.Parent = frame
-	uiGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	UiGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	UiGridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+	UiGridLayout.Parent = Frame
+	UiGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-	for Order, Choice in pairs(choices) do 
-		self:_AddRadioButton(frame, Order, Choice)
+	for Order, Choice in pairs(Choices) do
+		self:AddRadioButton(Frame, Order, Choice)
 	end
 
-		-- Sync size with content size.
-	GuiUtilities.AdjustHeightDynamicallyToLayout(frame, uiGridLayout)
+	-- Sync size with content size.
+	GuiUtilities.AdjustHeightDynamicallyToLayout(Frame, UiGridLayout)
 
-	return frame
+	return Frame
 end
 
-function Class:_AddRadioButton(parentFrame, index, choiceData)
-	local radioButtonObj = LabeledRadioButton.new{
-		Title = choiceData.Name
-	}
-	self._buttonObjsByIndex[index] = radioButtonObj
+function Class:AddRadioButton(ParentFrame: Frame, Index: number, ChoiceData: MultiChoiceOption)
+	local self = self :: LabeledMultiChoice
 
-	radioButtonObj:SetValueChangedFunction(function(value)
-		-- If we notice the button going from off to on, and it disagrees with 
+	local RadioButtonObj = LabeledRadioButton.new{
+		Title = ChoiceData.Name
+	}
+	self.ButtonObjsByIndex[Index] = RadioButtonObj
+
+	RadioButtonObj.ValueChanged:Connect(function(Value)
+		-- If we notice the button going from off to on, and it disagrees with
 		-- our current notion of selection, update selection.
-		if (value and self._selectedIndex ~= index) then 
-			self:SetSelectedIndex(index)
+		if (Value and self.SelectedIndex ~= Index) then
+			self:SetSelectedIndex(Index)
 		end
 	end)
-	
-	radioButtonObj:GetFrame().LayoutOrder = index
-	radioButtonObj:GetFrame().Parent = parentFrame
+
+	RadioButtonObj:GetFrame().LayoutOrder = Index
+	RadioButtonObj:GetFrame().Parent = ParentFrame
 end
 
 --// RETURN

@@ -7,92 +7,102 @@
 -- Uses shading to indicate hover and click states.
 --
 ----------------------------------------
+local Types = require(script.Parent.Parent.Types)
+
 local Class = {}
 Class.__index = Class
+
+type StatefulImageButton = Types.StatefulImageButton
 
 type Config = {
 	Icon: string,
 	Size: UDim2
 }
 
-function Class.new(Data: Config)
-	local self = setmetatable({}, Class)
+function Class.new(Data: Config): StatefulImageButton
+	local self = (setmetatable({}, Class) :: never) :: StatefulImageButton
 
 	self.Icon = Data.Icon
 	self.Size = Data.Size
 
-	local button = Instance.new("ImageButton")
-	button.Image = self.Icon
-	button.BackgroundTransparency = 1
-	button.BorderSizePixel = 0
-	button.Size = self.Size
+	local Button = Instance.new("ImageButton")
+	Button.Image = self.Icon
+	Button.BackgroundTransparency = 1
+	Button.BorderSizePixel = 0
+	Button.Size = self.Size
 
-	self._button = button
+	self.Button = Button
+	self.Hovered = false
+	self.Clicked = false
+	self.Selected = false
 
-	self._hovered = false
-	self._clicked = false
-	self._selected = false
-
-	button.InputBegan:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseMovement) then               
-			self._hovered = true
-			self:_updateButtonVisual()
+	Button.InputBegan:Connect(function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
+			self.Hovered = true
+			self:UpdateButtonVisual()
 		end
 	end)
 
-
-	button.InputEnded:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseMovement) then               
-			self._hovered = false
-			self._clicked = false
-			self:_updateButtonVisual()
+	Button.InputEnded:Connect(function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
+			self.Hovered = false
+			self.Clicked = false
+			self:UpdateButtonVisual()
 		end
-	end)    
-
-	button.MouseButton1Down:Connect(function()
-		self._clicked = true
-		self:_updateButtonVisual()
 	end)
 
-	button.MouseButton1Up:Connect(function()
-		self._clicked = false
-		self:_updateButtonVisual()
+	Button.MouseButton1Down:Connect(function()
+		self.Clicked = true
+		self:UpdateButtonVisual()
 	end)
-	
-	self:_updateButtonVisual()
+
+	Button.MouseButton1Up:Connect(function()
+		self.Clicked = false
+		self:UpdateButtonVisual()
+	end)
+
+	self:UpdateButtonVisual()
 
 	return self
 end
 
-function Class:_updateButtonVisual()
-	if (self._selected) then 
-		self._button.ImageTransparency = 0
-		self._button.ImageColor3 = Color3.new(1,1,1) 
-	else 
-		self._button.ImageTransparency = 0.5
-		self._button.ImageColor3 = Color3.new(.5,.5,.5)
+function Class:UpdateButtonVisual()
+	local self = self :: StatefulImageButton
+
+	if (self.Selected) then
+		self.Button.ImageTransparency = 0
+		self.Button.ImageColor3 = Color3.new(1, 1, 1)
+	else
+		self.Button.ImageTransparency = 0.5
+		self.Button.ImageColor3 = Color3.new(.5, .5, .5)
 	end
 
-	if (self._clicked) then 
-		self._button.BackgroundTransparency = 0.8
-	elseif (self._hovered) then 
-		self._button.BackgroundTransparency = 0.9
+	if (self.Clicked) then
+		self.Button.BackgroundTransparency = 0.8
+	elseif (self.Hovered) then
+		self.Button.BackgroundTransparency = 0.9
 	else
-		self._button.BackgroundTransparency = 1
+		self.Button.BackgroundTransparency = 1
 	end
 end
 
-function Class:SetSelected(selected)
-	self._selected = selected
-	self:_updateButtonVisual()
+function Class:SetSelected(Selected: boolean)
+	local self = self :: StatefulImageButton
+
+	self.Selected = Selected
+	self:UpdateButtonVisual()
 end
 
 function Class:GetSelected()
-	return self._selected
+	local self = self :: StatefulImageButton
+
+	return self.Selected
 end
 
 function Class:GetFrame()
-	return self._button
+	local self = self :: StatefulImageButton
+
+	return self.Button
 end
 
 --// RETURN
