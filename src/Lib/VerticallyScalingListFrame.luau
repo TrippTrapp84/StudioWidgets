@@ -17,7 +17,7 @@ Class.__index = Class
 
 type VerticallyScalingListFrame = Types.VerticallyScalingListFrame
 
-function Class.new(): VerticallyScalingListFrame
+function Class.new(Children: {Types.WidgetBase}?): VerticallyScalingListFrame
 	local self = (setmetatable({}, Class) :: never) :: VerticallyScalingListFrame
 
 	self.Resized = Signal.new()
@@ -45,6 +45,13 @@ function Class.new(): VerticallyScalingListFrame
 
 	self.ChildCount = 0
 
+	local Children: {Types.WidgetBase} = Children or {}
+
+	for _, Child in pairs(Children) do
+		if not Child.GetFrame then continue end
+		self:AddChild(Child.GetFrame(Child))
+	end
+
 	return self
 end
 
@@ -65,12 +72,16 @@ function Class:GetFrame()
 	return self.Frame
 end
 
-function Class:AddChild(ChildFrame: GuiObject)
+function Class:AddChild(Child: Instance)
 	local self = self :: VerticallyScalingListFrame
 
-	ChildFrame.LayoutOrder = self.ChildCount
-	self.ChildCount = self.ChildCount + 1
-	ChildFrame.Parent = self.Frame
+	if Child:IsA("GuiObject") then
+		Child.LayoutOrder = self.ChildCount
+		self.ChildCount = self.ChildCount + 1
+	end
+
+	Child.Parent = self:GetFrame()
+	return Child
 end
 
 return Class

@@ -1,4 +1,5 @@
 local PluginUtil = require(script.Parent.Parent.Util.Plugin)
+local Types = require(script.Parent.Parent.Types)
 
 local Class = {}
 Class.__index = Class
@@ -8,7 +9,7 @@ type Config = {
 	WidgetInfo: DockWidgetPluginGuiInfo?
 }
 
-function Class.new(Data: Config)
+function Class.new(Data: Config, Children: {Types.WidgetBase}?)
 	local self = setmetatable({}, Class)
 	self.Name = Data.Name or "Widget"
 	self.WidgetInfo = Data.WidgetInfo or DockWidgetPluginGuiInfo.new(
@@ -37,19 +38,28 @@ function Class.new(Data: Config)
 	self.Connections[1] = settings().Studio.ThemeChanged:Connect(function()
 		self.WidgetBackground.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
 	end)
-	
+
+	local Children: {Types.WidgetBase} = Children or {}
+
+	for _, Child in pairs(Children) do
+		if not Child.GetFrame then continue end
+		self:AddChild(Child.GetFrame(Child))
+	end
+
 	return self
 end
 
-function Class:SetEnabled(Enabled)
+function Class:SetEnabled(Enabled: boolean)
 	self.Widget.Enabled = Enabled or not self.Widget.Enabled
 end
 
-function Class:AddChild(Child)
+function Class:AddChild(Child: Instance)
 	Child.Parent = self.WidgetBackground
+
+	return Child
 end
 
-function Class:BindToClose(Func)
+function Class:BindToClose(Func: () -> ())
 	self.Widget:BindToClose(Func)
 end
 

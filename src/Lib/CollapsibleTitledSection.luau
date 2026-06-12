@@ -49,7 +49,7 @@ type Config = {
 	TitleBarHeight: number?,
 }
 
-function Class.new(Config: Config): CollapsibleTitledSection
+function Class.new(Config: Config, Children: {Types.WidgetBase}?): CollapsibleTitledSection
 	local self = (setmetatable({}, Class) :: never) :: CollapsibleTitledSection
 
 	local Minimizable = if Config.Minimizable == nil then true else Config.Minimizable
@@ -130,6 +130,15 @@ function Class.new(Config: Config): CollapsibleTitledSection
 		SizerFrame.Parent = self.ContentsFrame
 	end)
 
+	local Children: {Types.WidgetBase} = Children or {}
+
+	for _, Child in pairs(Children) do
+		if not Child.GetFrame then continue end
+
+		local Frame = Child.GetFrame(Child)
+		self:AddChild(Frame)
+	end
+
 	return self
 end
 
@@ -137,6 +146,14 @@ function Class:GetFrame()
 	local self = self :: CollapsibleTitledSection
 
 	return self.Frame
+end
+
+function Class:AddChild(Child: Instance)
+	local self = self :: CollapsibleTitledSection
+
+	Child.Parent = self:GetFrame()
+
+	return Child
 end
 
 function Class:UpdateSize()

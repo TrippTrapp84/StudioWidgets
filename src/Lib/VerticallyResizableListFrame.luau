@@ -29,7 +29,7 @@ type Config = {
 	HeightLocked: boolean?
 }
 
-function Class.new(Data: Config): VerticallyResizableListFrame
+function Class.new(Data: Config, Children: {Types.WidgetBase}?): VerticallyResizableListFrame
 	local self = (setmetatable({}, Class) :: never) :: VerticallyResizableListFrame
 
 	self.MaximumHeight = Data.MaximumHeight or 300
@@ -117,6 +117,13 @@ function Class.new(Data: Config): VerticallyResizableListFrame
 
 	self.ChildCount = 0
 
+	local Children: {Types.WidgetBase} = Children or {}
+
+	for _, Child in pairs(Children) do
+		if not Child.GetFrame then continue end
+		self:AddChild(Child.GetFrame(Child))
+	end
+
 	return self
 end
 
@@ -137,12 +144,16 @@ function Class:GetFrame()
 	return self.Frame
 end
 
-function Class:AddChild(ChildFrame: GuiObject)
+function Class:AddChild(Child: Instance)
 	local self = self :: VerticallyResizableListFrame
 
-	ChildFrame.LayoutOrder = self.ChildCount
-	self.ChildCount = self.ChildCount + 1
-	ChildFrame.Parent = self.Frame
+	if Child:IsA("GuiObject") then
+		Child.LayoutOrder = self.ChildCount
+		self.ChildCount = self.ChildCount + 1
+	end
+
+	Child.Parent = self:GetFrame()
+	return Child
 end
 
 function Class:SetLocked(Locked: boolean)

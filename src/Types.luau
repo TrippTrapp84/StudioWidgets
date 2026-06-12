@@ -4,7 +4,7 @@ type Signal<T...> = Signal.Signal<T...>
 
 local Types = {}
 
-export type WidgetBase<T> = T & {
+export type WidgetBase<T = {}> = T & {
 	AddChild: (<I>(self: WidgetBase<T>, I) -> I)?,
 	GetFrame: ((self: WidgetBase<T>) -> GuiObject)?
 }
@@ -215,7 +215,9 @@ export type VerticalScrollingFrame = WidgetBase<{
 	ScrollFrame: ScrollingFrame,
 	ScrollBackground: Frame,
 	UiListLayout: UIListLayout,
+    ChildCount: number,
 
+    AddChild: <T>(self: VerticalScrollingFrame, Child: T) -> T,
 	UpdateScrollbarBackingVisibility: (self: VerticalScrollingFrame) -> (),
 	UpdateScrollingFrameCanvas: (self: VerticalScrollingFrame) -> (),
 	GetFrame: (self: VerticalScrollingFrame) -> Frame,
@@ -229,7 +231,7 @@ export type VerticallyScalingListFrame = WidgetBase<{
 
 	AddBottomPadding: (self: VerticallyScalingListFrame) -> (),
 	GetFrame: (self: VerticallyScalingListFrame) -> Frame,
-	AddChild: (self: VerticallyScalingListFrame, ChildFrame: GuiObject) -> (),
+	AddChild: <T>(self: VerticallyScalingListFrame, Child: T) -> T,
 }>
 
 export type VerticallyResizableListFrame = WidgetBase<{
@@ -244,7 +246,7 @@ export type VerticallyResizableListFrame = WidgetBase<{
 
 	AddBottomPadding: (self: VerticallyResizableListFrame) -> (),
 	GetFrame: (self: VerticallyResizableListFrame) -> Frame,
-	AddChild: (self: VerticallyResizableListFrame, ChildFrame: GuiObject) -> (),
+	AddChild: <T>(self: VerticallyResizableListFrame, Child: T) -> T,
 	SetLocked: (self: VerticallyResizableListFrame, Locked: boolean) -> (),
 }>
 
@@ -284,6 +286,7 @@ export type CollapsibleTitledSection = WidgetBase<{
 	Pressed: Signal<>,
 	DoublePressed: Signal<>,
 
+    AddChild: <T>(self: CollapsibleTitledSection, Child: T) -> T,
 	GetFrame: (self: CollapsibleTitledSection) -> Frame,
 	UpdateSize: (self: CollapsibleTitledSection) -> (),
 	UpdateMinimizeButton: (self: CollapsibleTitledSection) -> (),

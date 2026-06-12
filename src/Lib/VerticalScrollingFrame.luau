@@ -13,7 +13,7 @@ Class.__index = Class
 
 type VerticalScrollingFrame = Types.VerticalScrollingFrame
 
-function Class.new(): VerticalScrollingFrame
+function Class.new(Children: {Types.WidgetBase}?): VerticalScrollingFrame
 	local self = (setmetatable({}, Class) :: never) :: VerticalScrollingFrame
 
 	local Section = Instance.new("Frame")
@@ -48,6 +48,8 @@ function Class.new(): VerticalScrollingFrame
 	ScrollFrame.Position = UDim2.new(0, 0, 0, 0)
 	ScrollFrame.Parent = Section
 
+	self.ChildCount = 0
+
 	local UiListLayout = Instance.new("UIListLayout")
 	UiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	UiListLayout.Parent = ScrollFrame
@@ -65,13 +67,32 @@ function Class.new(): VerticalScrollingFrame
 	GuiUtilities.SyncGuiElementBorderColor(ScrollBackground)
 	GuiUtilities.SyncGuiElementTitleColor(ScrollBackground)
 
+	local Children: {Types.WidgetBase} = Children or {}
+
+	for _, Child in pairs(Children) do
+		if not Child.GetFrame then continue end
+		self:AddChild(Child.GetFrame(Child))
+	end
+
 	return self
+end
+
+function Class:AddChild(Child: Instance)
+	local self = self :: VerticalScrollingFrame
+
+	if Child:IsA("GuiObject") then
+		Child.LayoutOrder = self.ChildCount
+		self.ChildCount = self.ChildCount + 1
+	end
+
+	Child.Parent = self:GetFrame()
+	return Child
 end
 
 function Class:UpdateScrollbarBackingVisibility()
 	local self = self :: VerticalScrollingFrame
 
-	self.ScrollBackground.Visible = self.ScrollFrame.AbsoluteSize.y < self.UiListLayout.AbsoluteContentSize.y
+	self.ScrollBackground.Visible = self.ScrollFrame.AbsoluteSize.Y < self.UiListLayout.AbsoluteContentSize.Y
 end
 
 function Class:UpdateScrollingFrameCanvas()
