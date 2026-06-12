@@ -23,6 +23,7 @@ local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 local TransparentTextInput = require(script.Parent.TransparentTextInput)
 local Signal = require(script.Parent.Parent.Util.Signal)
 local Types = require(script.Parent.Parent.Types)
+local CommonUtil = require(script.Parent.Parent.Util.Common)
 
 local RunService = game:GetService("RunService")
 
@@ -49,7 +50,7 @@ type Config = {
 	TitleBarHeight: number?,
 }
 
-function Class.new(Config: Config, Children: {Types.WidgetBase}?): CollapsibleTitledSection
+function Class.new<T>(Config: Config, Children: {T}?): CollapsibleTitledSection
 	local self = (setmetatable({}, Class) :: never) :: CollapsibleTitledSection
 
 	local Minimizable = if Config.Minimizable == nil then true else Config.Minimizable
@@ -130,14 +131,7 @@ function Class.new(Config: Config, Children: {Types.WidgetBase}?): CollapsibleTi
 		SizerFrame.Parent = self.ContentsFrame
 	end)
 
-	local Children: {Types.WidgetBase} = Children or {}
-
-	for _, Child in pairs(Children) do
-		if not Child.GetFrame then continue end
-
-		local Frame = Child.GetFrame(Child)
-		self:AddChild(Frame)
-	end
+	CommonUtil.AddChildren(self, Children or {})
 
 	return self
 end

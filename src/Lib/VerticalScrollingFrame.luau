@@ -7,13 +7,14 @@
 ----------------------------------------
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 local Types = require(script.Parent.Parent.Types)
+local CommonUtil = require(script.Parent.Parent.Util.Common)
 
 local Class = {}
 Class.__index = Class
 
 type VerticalScrollingFrame = Types.VerticalScrollingFrame
 
-function Class.new(Children: {Types.WidgetBase}?): VerticalScrollingFrame
+function Class.new<T>(Children: {T}?): VerticalScrollingFrame
 	local self = (setmetatable({}, Class) :: never) :: VerticalScrollingFrame
 
 	local Section = Instance.new("Frame")
@@ -67,12 +68,7 @@ function Class.new(Children: {Types.WidgetBase}?): VerticalScrollingFrame
 	GuiUtilities.SyncGuiElementBorderColor(ScrollBackground)
 	GuiUtilities.SyncGuiElementTitleColor(ScrollBackground)
 
-	local Children: {Types.WidgetBase} = Children or {}
-
-	for _, Child in pairs(Children) do
-		if not Child.GetFrame then continue end
-		self:AddChild(Child.GetFrame(Child))
-	end
+	CommonUtil.AddChildren(self, Children or {})
 
 	return self
 end

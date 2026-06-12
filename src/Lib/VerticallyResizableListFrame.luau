@@ -12,6 +12,7 @@ local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 local PluginUtil = require(script.Parent.Parent.Util.Plugin)
 local Signal = require(script.Parent.Parent.Util.Signal)
 local Types = require(script.Parent.Parent.Types)
+local CommonUtil = require(script.Parent.Parent.Util.Common)
 
 local BOTTOM_PADDING = 10
 local RESIZE_LINE_THICKNESS = 5
@@ -29,7 +30,7 @@ type Config = {
 	HeightLocked: boolean?
 }
 
-function Class.new(Data: Config, Children: {Types.WidgetBase}?): VerticallyResizableListFrame
+function Class.new<T>(Data: Config, Children: {T}?): VerticallyResizableListFrame
 	local self = (setmetatable({}, Class) :: never) :: VerticallyResizableListFrame
 
 	self.MaximumHeight = Data.MaximumHeight or 300
@@ -117,12 +118,7 @@ function Class.new(Data: Config, Children: {Types.WidgetBase}?): VerticallyResiz
 
 	self.ChildCount = 0
 
-	local Children: {Types.WidgetBase} = Children or {}
-
-	for _, Child in pairs(Children) do
-		if not Child.GetFrame then continue end
-		self:AddChild(Child.GetFrame(Child))
-	end
+	CommonUtil.AddChildren(self, Children or {})
 
 	return self
 end

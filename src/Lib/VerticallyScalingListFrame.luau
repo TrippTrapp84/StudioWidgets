@@ -9,6 +9,7 @@
 local GuiUtilities = require(script.Parent.Parent.Util.GuiUtilities)
 local Signal = require(script.Parent.Parent.Util.Signal)
 local Types = require(script.Parent.Parent.Types)
+local CommonUtil = require(script.Parent.Parent.Util.Common)
 
 local BOTTOM_PADDING = 10
 
@@ -17,7 +18,7 @@ Class.__index = Class
 
 type VerticallyScalingListFrame = Types.VerticallyScalingListFrame
 
-function Class.new(Children: {Types.WidgetBase}?): VerticallyScalingListFrame
+function Class.new<T>(Children: {T}?): VerticallyScalingListFrame
 	local self = (setmetatable({}, Class) :: never) :: VerticallyScalingListFrame
 
 	self.Resized = Signal.new()
@@ -45,12 +46,7 @@ function Class.new(Children: {Types.WidgetBase}?): VerticallyScalingListFrame
 
 	self.ChildCount = 0
 
-	local Children: {Types.WidgetBase} = Children or {}
-
-	for _, Child in pairs(Children) do
-		if not Child.GetFrame then continue end
-		self:AddChild(Child.GetFrame(Child))
-	end
+	CommonUtil.AddChildren(self, Children or {})
 
 	return self
 end

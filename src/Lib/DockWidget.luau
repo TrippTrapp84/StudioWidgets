@@ -1,5 +1,6 @@
 local PluginUtil = require(script.Parent.Parent.Util.Plugin)
 local Types = require(script.Parent.Parent.Types)
+local CommonUtil = require(script.Parent.Parent.Util.Common)
 
 local Class = {}
 Class.__index = Class
@@ -11,7 +12,7 @@ type Config = {
 	WidgetInfo: DockWidgetPluginGuiInfo?
 }
 
-function Class.new(Data: Config, Children: {Types.WidgetBase}?): DockWidget
+function Class.new<T>(Data: Config, Children: {T}?): DockWidget
 	local self = (setmetatable({}, Class) :: never) :: DockWidget
 	local Name = Data.Name or "Widget"
 	
@@ -40,12 +41,7 @@ function Class.new(Data: Config, Children: {Types.WidgetBase}?): DockWidget
 		self.WidgetBackground.BackgroundColor3 = settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainBackground)
 	end)
 
-	local Children: {Types.WidgetBase} = Children or {}
-
-	for _, Child in pairs(Children) do
-		if not Child.GetFrame then continue end
-		self:AddChild(Child.GetFrame(Child))
-	end
+	CommonUtil.AddChildren(self, Children or {})
 
 	return self
 end
