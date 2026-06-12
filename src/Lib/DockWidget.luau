@@ -4,15 +4,18 @@ local Types = require(script.Parent.Parent.Types)
 local Class = {}
 Class.__index = Class
 
+type DockWidget = Types.DockWidget
+
 type Config = {
 	Name: string?,
 	WidgetInfo: DockWidgetPluginGuiInfo?
 }
 
-function Class.new(Data: Config, Children: {Types.WidgetBase}?)
-	local self = setmetatable({}, Class)
-	self.Name = Data.Name or "Widget"
-	self.WidgetInfo = Data.WidgetInfo or DockWidgetPluginGuiInfo.new(
+function Class.new(Data: Config, Children: {Types.WidgetBase}?): DockWidget
+	local self = (setmetatable({}, Class) :: never) :: DockWidget
+	local Name = Data.Name or "Widget"
+	
+	self.Widget = PluginUtil.GetPluginDistributorObject():CreateDockWidgetPluginGuiAsync(Name, Data.WidgetInfo or DockWidgetPluginGuiInfo.new(
 		Enum.InitialDockState.Float,  -- Widget will be initialized in floating panel
 		true,   -- Widget will be initially enabled
 		false,  -- Don't override the previous enabled state
@@ -20,10 +23,8 @@ function Class.new(Data: Config, Children: {Types.WidgetBase}?)
 		300,    -- Default height of the floating window
 		150,    -- Minimum width of the floating window
 		150  	-- Minimum height of the floating window
-	)
-	
-	self.Widget = PluginUtil.GetPluginDistributorObject():CreateDockWidgetPluginGuiAsync(self.Name, self.WidgetInfo)
-	self.Widget.Title = self.Name
+	))
+	self.Widget.Title = Name
 	
 	self.WidgetBackground = Instance.new("Frame")
 	self.WidgetBackground.Name = "Background"
@@ -50,16 +51,22 @@ function Class.new(Data: Config, Children: {Types.WidgetBase}?)
 end
 
 function Class:SetEnabled(Enabled: boolean)
+	local self = self :: DockWidget
+
 	self.Widget.Enabled = Enabled or not self.Widget.Enabled
 end
 
 function Class:AddChild(Child: Instance)
+	local self = self :: DockWidget
+	
 	Child.Parent = self.WidgetBackground
 
 	return Child
 end
 
 function Class:BindToClose(Func: () -> ())
+	local self = self :: DockWidget
+	
 	self.Widget:BindToClose(Func)
 end
 

@@ -26,6 +26,16 @@ type ButtonEntry = {
 	Activate: (InternalTrigger: boolean?) -> (),
 }
 
+export type DockWidget = WidgetBase<{
+	Widget: DockWidgetPluginGui,
+	Connections: {RBXScriptConnection},
+	WidgetBackground: GuiObject,
+
+	SetEnabled: (self: DockWidget, Enabled: boolean) -> (),
+	AddChild: <T>(self: DockWidget, Child: T) -> T,
+	BindToClose: (self: DockWidget, Callback: () -> ()) -> (),
+}>
+
 export type CustomTextButton = WidgetBase<{
 	LabelText: string,
 	Label: TextLabel,

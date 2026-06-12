@@ -5,6 +5,7 @@ local StudioWidgets = {}
 
 StudioWidgets.Widgets = require(script.Lib)
 
+export type DockWidget = Types.DockWidget
 export type CustomTextButton = Types.CustomTextButton
 export type ImageButtonWithText = Types.ImageButtonWithText
 export type StatefulImageButton = Types.StatefulImageButton
