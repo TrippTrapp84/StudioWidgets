@@ -16,7 +16,8 @@ Class.__index = Class
 type CustomTextButton = Types.CustomTextButton
 
 type Config = {
-	Title: string
+	Title: string,
+	Size: UDim2
 }
 
 function Class.new(Data: Config): CustomTextButton
@@ -31,6 +32,7 @@ function Class.new(Data: Config): CustomTextButton
 	Button.ScaleType = Enum.ScaleType.Slice
 	Button.SliceCenter = Rect.new(7, 7, 156, 36)
 	Button.AutoButtonColor = false
+	Button.Size = Data.Size
 
 	local Label = Instance.new('TextLabel')
 	Label.Text = self.LabelText

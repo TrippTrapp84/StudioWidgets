@@ -15,17 +15,17 @@ local DEFAULT_EXPAND_TIME = 0.15
 local Class = {}
 Class.__index = Class
 
-type DropdownOption = Types.DropdownOption
-type LabeledDropdownMenu = Types.LabeledDropdownMenu
+type DropdownOption<T = unknown> = Types.DropdownOption<T>
+type LabeledDropdownMenu<T = unknown> = Types.LabeledDropdownMenu<T>
 
-type Config = {
+type Config<T> = {
 	Title: string,
 	Inset: number?,
-	Options: {DropdownOption}?
+	Options: {DropdownOption<T>}?
 }
 
-function Class.new(Data: Config): LabeledDropdownMenu
-	local self = (setmetatable({}, Class) :: never) :: LabeledDropdownMenu
+function Class.new<T>(Data: Config<T>): LabeledDropdownMenu<T>
+	local self = (setmetatable({}, Class) :: never) :: LabeledDropdownMenu<T>
 
 	self.Title = Data.Title
 	self.Inset = Data.Inset or 0
@@ -117,7 +117,6 @@ function Class:ToggleExpand()
 		local BoundingPos, BoundingSize = GuiUtilities.GetAncestralBoundingBox(self.InvisFrame)
 
 		if not self.Expanded then
-			print(AbsAdded, BoundingPos.Y + BoundingSize.Y)
 			if AbsAdded >= BoundingPos.Y + BoundingSize.Y then
 				self.ContentsFrame.AnchorPoint = Vector2.new(0.5, 1)
 				self.ContentsFrame.Position = UDim2.new(0.5, 0, 1, 0)
@@ -134,18 +133,18 @@ function Class:ToggleExpand()
 
 	if self.Expanded then
 		self:Retract()
-		self.Expanded = false
 	else
 		self:Expand()
-		self.Expanded = true
 	end
 end
 
 function Class:Retract()
 	local self = self :: LabeledDropdownMenu
 
+	if not self.Expanded then return end
+
 	self.InvisFrame:TweenSize(UDim2.new(1, 2, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true, function()
-		wait(DEFAULT_EXPAND_TIME)
+		task.wait(DEFAULT_EXPAND_TIME)
 		self.DropdownDB = false
 		self.ContentsFrame.AnchorPoint = Vector2.new(0.5, 0)
 		self.ContentsFrame.Position = UDim2.new(0.5, 0, 0, 0)
@@ -158,8 +157,10 @@ end
 function Class:Expand()
 	local self = self :: LabeledDropdownMenu
 
+	if self.Expanded then return end
+
 	self.InvisFrame:TweenSize(UDim2.new(1, 2, 0, self.ExpandedSize + 2), Enum.EasingDirection.In, Enum.EasingStyle.Quad, DEFAULT_EXPAND_TIME, true, function()
-		wait(DEFAULT_EXPAND_TIME)
+		task.wait(DEFAULT_EXPAND_TIME)
 		self.DropdownDB = false
 	end)
 	self.Expanded = true

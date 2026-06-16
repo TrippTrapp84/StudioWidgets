@@ -9,9 +9,9 @@ export type WidgetBase<T = {}> = T & {
 	GetFrame: ((self: WidgetBase<T>) -> GuiObject)?
 }
 
-export type DropdownOption = {
+export type DropdownOption<T = unknown> = {
 	Name: string,
-	Value: unknown,
+	Value: T,
 	Identifier: string?
 }
 
@@ -153,36 +153,36 @@ export type TransparentTextInput = WidgetBase<{
 	SetValue: (self: TransparentTextInput, NewValue: string) -> (),
 }>
 
-export type LabeledDropdownMenu = WidgetBase<{
+export type LabeledDropdownMenu<T = unknown> = WidgetBase<{
 	Title: string,
 	Inset: number,
-	Options: {DropdownOption},
+	Options: {DropdownOption<T>},
 	DropdownButtonHeight: number,
 	ExpandedSize: number,
 	CanvasSize: number?,
-	SectionFrame: Frame,
+	SectionFrame: GuiObject,
 	TitleLabel: TextLabel,
 	DropButton: TextButton,
 	ContentsFrame: ScrollingFrame,
-	InvisFrame: Frame,
+	InvisFrame: GuiObject,
 	ButtonArray: {[string]: ButtonEntry},
 	Selected: unknown,
 	Expanded: boolean,
 	DropdownDB: boolean,
-	SelectionChanged: Signal<unknown, boolean>,
+	SelectionChanged: Signal<T, boolean>,
 
-	SetChoice: (self: LabeledDropdownMenu, Id: string) -> (),
-	GetChoice: (self: LabeledDropdownMenu) -> unknown,
-	GetFrame: (self: LabeledDropdownMenu) -> Frame,
-	ChangeLabel: (self: LabeledDropdownMenu, LabelText: string) -> (),
-	AddSelection: (self: LabeledDropdownMenu, Selection: DropdownOption) -> (),
-	RemoveSelection: (self: LabeledDropdownMenu, Identifier: string) -> (),
-	AddSelectionsFromTable: (self: LabeledDropdownMenu, SelectionTable: {DropdownOption}) -> (),
-	ResetChoice: (self: LabeledDropdownMenu) -> (),
-	ToggleExpand: (self: LabeledDropdownMenu) -> (),
-	Retract: (self: LabeledDropdownMenu) -> (),
-	Expand: (self: LabeledDropdownMenu) -> (),
-	UpdateSize: (self: LabeledDropdownMenu) -> (),
+	SetChoice: (self: LabeledDropdownMenu<T>, Id: string) -> (),
+	GetChoice: (self: LabeledDropdownMenu<T>) -> T,
+	GetFrame: (self: LabeledDropdownMenu<T>) -> Frame,
+	ChangeLabel: (self: LabeledDropdownMenu<T>, LabelText: string) -> (),
+	AddSelection: (self: LabeledDropdownMenu<T>, Selection: DropdownOption<T>) -> (),
+	RemoveSelection: (self: LabeledDropdownMenu<T>, Identifier: string) -> (),
+	AddSelectionsFromTable: (self: LabeledDropdownMenu<T>, SelectionTable: {DropdownOption<T>}) -> (),
+	ResetChoice: (self: LabeledDropdownMenu<T>) -> (),
+	ToggleExpand: (self: LabeledDropdownMenu<T>) -> (),
+	Retract: (self: LabeledDropdownMenu<T>) -> (),
+	Expand: (self: LabeledDropdownMenu<T>) -> (),
+	UpdateSize: (self: LabeledDropdownMenu<T>) -> (),
 }>
 
 export type LabeledInstanceSelection = WidgetBase<{

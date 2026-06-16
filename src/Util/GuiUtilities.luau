@@ -281,12 +281,12 @@ function module.MakeFrameAutoScalingList(Frame: GuiObject, UiListLayout: UIListL
 	module.AdjustHeightDynamicallyToLayout(Frame, UiListLayout)
 end
 
-function module.GetAncestralBoundingBox(Frame): (Vector2, Vector2)
+function module.GetAncestralBoundingBox(Frame: GuiObject): (Vector2, Vector2)
 	local BoundingCorner1, BoundingCorner2
-	local CurrentFrame = Frame
-	while CurrentFrame.Parent do
-		CurrentFrame = CurrentFrame.Parent
-		if not CurrentFrame:IsA("GuiBase2d") then
+	local CurrentFrame: Instance? = Frame
+	while CurrentFrame and CurrentFrame.Parent do
+		CurrentFrame = CurrentFrame.Parent :: Instance
+		if not CurrentFrame:IsA("GuiObject") then
 			continue
 		end
 		local IsWidget = CurrentFrame:IsA("DockWidgetPluginGui")

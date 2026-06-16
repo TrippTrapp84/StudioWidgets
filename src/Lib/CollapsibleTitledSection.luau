@@ -1,4 +1,4 @@
-----------------------------------------
+﻿----------------------------------------
 --
 -- CollapsibleTitledSectionClass
 --
@@ -94,7 +94,7 @@ function Class.new<T>(Config: Config, Children: {T}?): CollapsibleTitledSection
 	)
 	self:SetCollapsed(self.Minimized)
 
-	if Config.AutoScalingEnabled then
+	if Config.AutoScalingEnabled ~= false then
 		GuiUtilities.MakeFrameAutoScalingList(self.ContentsFrame)
 	end
 
@@ -145,7 +145,7 @@ end
 function Class:AddChild(Child: Instance)
 	local self = self :: CollapsibleTitledSection
 
-	Child.Parent = self:GetFrame()
+	Child.Parent = self.ContentsFrame
 
 	return Child
 end
